@@ -116,7 +116,7 @@ AxisSettings const AxisSettings::Default =
 
 
 template<typename T = float>
-class ChartPrinter: public sf::Drawable
+class ChartPrinter: public sf::Drawable, public sf::Transformable
 {
 public:
 	typedef T value_type;
@@ -139,6 +139,7 @@ public:
 		sf::RenderStates states = sf::RenderStates::Default
 	) const override
 	{
+		states.transform *= sf::Transformable::getTransform();
 		target.draw(sprite_, states);
 		return;
 	}
@@ -167,6 +168,7 @@ public:
 	ChartPrinter &clearCharts()
 	{
 		charts_.clear();
+		ischanged_ = true;
 		return *this;
 	}
 
@@ -187,12 +189,14 @@ public:
 	{
 		width_ = width;
 		height_ = height;
+		ischanged_ = true;
 		return *this;
 	}
 	ChartPrinter &setSize(sf::Vector2f size)
 	{
 		width_ = size.x;
 		height_ = size.y;
+		ischanged_ = true;
 		return *this;
 	}
 
@@ -212,11 +216,20 @@ private:
 				std::pair<chart_type, ChartSettings> const &lhs,
 				std::pair<chart_type, ChartSettings> const &rhs
 			)->bool {
-				return lhs.second.overlayprior < rhs.second.overlayprior;
+				return lhs.second.overlayprior > rhs.second.overlayprior;
 			}
 		);
 		
-		// find point for axis
+		calculate_size_();
+
+		draw_();
+
+		ischanged_ = false;
+		return;
+	}
+
+	void calculate_size_()
+	{
 		value_type xmin = 0, xmax = 0;
 		value_type ymin = 0, ymax = 0;
 
@@ -282,20 +295,23 @@ private:
 				ymax = buf->second;
 		}
 		
-		float xl = xmax-xmin;
-		float yl = ymax-ymin;
+		xl_ = xmax-xmin;
+		yl_ = ymax-ymin;
 
-		if(xl == 0)
+		if(xl_ == 0)
 			axispoint_.x = 0.0f;
 		else
-			axispoint_.x = float(-xmin) / xl * width_;
-		if(yl == 0)
+			axispoint_.x = float(-xmin) / xl_ * width_;
+		if(yl_ == 0)
 			axispoint_.y = 0.0f;
 		else
-			axispoint_.y = float(-ymin) / yl * height_;
+			axispoint_.y = float(-ymin) / yl_ * height_;
 
+		return;
+	}
 
-		// draw
+	void draw_()
+	{
 		rtexture_.create(width_, height_);
 		rtexture_.clear(sf::Color::Transparent);
 
@@ -325,12 +341,12 @@ private:
 			for(auto b = i.first->begin()+1, e = i.first->end(); b != e; ++b) {
 				line.setPosition(
 					{
-						(b-1)->first/xl*width_ + axispoint_.x,
-						((b-1)->second/yl*height_ + axispoint_.y)
+						(b-1)->first/xl_*width_ + axispoint_.x,
+						((b-1)->second/yl_*height_ + axispoint_.y)
 					},
 					{
-						b->first/xl*width_ + axispoint_.x,
-						(b->second/yl*height_ + axispoint_.y)
+						b->first/xl_*width_ + axispoint_.x,
+						(b->second/yl_*height_ + axispoint_.y)
 					}
 				);
 				rtexture_.draw(line);
@@ -342,9 +358,6 @@ private:
 		sprite_.setTextureRect(
 			sf::IntRect(0, 0, int(width_), int(height_))
 		);
-
-		ischanged_ = false;
-		return;
 	}
 
 	std::vector<
@@ -353,6 +366,7 @@ private:
 
 	AxisSettings axis_ = AxisSettings::Default;
 	sf::Vector2f axispoint_ = {0.0f, 0.0f};
+	float xl_ = 0.0f, yl_ = 0.0f;
 
 	float width_ = 300.0f, height_ = 300.0f;
 

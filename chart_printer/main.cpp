@@ -4,15 +4,16 @@
 
 #include <clever/SFML/HelpFunctions.hpp>
 
-using namespace clever;
 #include "ChartPrinter.hpp"
+
+using namespace clever;
 
 using namespace sf;
 using namespace std;
 
 
 RenderWindow window;
-VideoMode dsmode;
+VideoMode const dsmode = VideoMode::getDesktopMode();;
 string const TITLE = "Chart Printer";
 Event event;
 
@@ -20,7 +21,6 @@ void init_window()
 {
 	ContextSettings sets;
 	sets.antialiasingLevel = 8;
-	dsmode = VideoMode::getDesktopMode();
 	window.create(dsmode, TITLE, Style::None, sets);
 	window.setPosition({0, 0});
 	window.setVerticalSyncEnabled(true);
@@ -38,6 +38,7 @@ chart_type generate_chart(
 )
 {
 	chart_type chart(new typename chart_type::element_type());
+	
 	for(; start < finish; start += step) {
 		chart->push_back({start, fun(start)});
 	}
@@ -51,7 +52,7 @@ int main( int argc, char *argv[] )
 	
 	ChartPrinter<float> chart;
 	chart.setSize(
-		conversion<float>(window.getSize())
+		conversion<float>(window.getSize()-Vector2u{100, 100})
 	);
 	chart.setAxisSettings( AxisSettings{Color::Black, 10.0f} );
 	chart.addChart(
@@ -65,7 +66,7 @@ int main( int argc, char *argv[] )
 	);
 	chart.addChart(
 		generate_chart(
-			0.0f, 1920.0f, 4.0f, 
+			0.0f, 1920.0f, 1.0f, 
 			[](float x)->float {
 				return pow(x, 0.75);
 			}
@@ -79,8 +80,10 @@ int main( int argc, char *argv[] )
 				return pow(x, 0.80);
 			}
 		),
-		{ Color::Red, 1.0f, 12.0f }
+		{ Color::Red, 1.0f, 0.0f }
 	);
+
+	chart.setPosition({50.0f, 50.0f});
 
 	while(window.isOpen()) {
 		if(window.pollEvent(event)) {
