@@ -10,7 +10,7 @@ run: all
 main: main.o
 	g++ -o $(EXECUTABLE) $(LDFLAGS) main.o  $(LIBS)
 
-main.o: main.cpp ChartPrinter.hpp
+main.o: main.cpp ChartPrinter.hpp Line.hpp
 	g++ -Wall $(CFLAGS) -o main.o main.cpp
 	
 

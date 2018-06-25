@@ -3,6 +3,7 @@
 #include <functional>
 
 #include <clever/SFML/HelpFunctions.hpp>
+#include <clever/IostreamFunction.hpp>
 
 #include "ChartPrinter.hpp"
 
@@ -13,7 +14,7 @@ using namespace std;
 
 
 RenderWindow window;
-VideoMode const dsmode = VideoMode::getDesktopMode();;
+VideoMode const dsmode = VideoMode::getDesktopMode();
 string const TITLE = "Chart Printer";
 Event event;
 
@@ -49,12 +50,12 @@ chart_type generate_chart(
 int main( int argc, char *argv[] )
 {
 	init_window();
-	
+
 	ChartPrinter<float> chart;
 	chart.setSize(
-		conversion<float>(window.getSize()-Vector2u{100, 100})
+		conversion<float>(window.getSize())
 	);
-	chart.setAxisSettings( AxisSettings{Color::Black, 10.0f} );
+	chart.setAxisSettings({Color::Black, 10.0f});
 	chart.addChart(
 		generate_chart(
 			0.0f, 1920.0f, 1.0f, 
@@ -62,7 +63,7 @@ int main( int argc, char *argv[] )
 				return sqrt(x);
 			}
 		),
-		{ Color::Black, 2.0f, 10.0f }
+		{ Color::Magenta, 2.0f, 10.0f }
 	);
 	chart.addChart(
 		generate_chart(
@@ -77,13 +78,12 @@ int main( int argc, char *argv[] )
 		generate_chart(
 			0.0f, 1920.0f, 1.0f, 
 			[](float x)->float {
-				return pow(x, 0.80);
+				return pow(x, 0.4);
 			}
 		),
 		{ Color::Red, 1.0f, 0.0f }
 	);
 
-	chart.setPosition({50.0f, 50.0f});
 
 	while(window.isOpen()) {
 		if(window.pollEvent(event)) {

@@ -11,107 +11,71 @@
 
 #include <SFML/Graphics.hpp>
 
+#include "Line.hpp"
 
 
 
-
-template<typename T = void>
-class Line: public sf::Drawable
-{
-public:
-	Line(
-		sf::Vector2f const &begin = {0.0f, 0.0f},
-		sf::Vector2f const &end = {0.0f, 0.0f},
-		sf::Color const &color = sf::Color::Black,
-		float thickness = 1.0f
-	)
-	{
-		setPosition(begin, end);
-		setColor(color);
-		setThickness(thickness);
-		return;
-	}
-
-	void draw(
-		sf::RenderTarget &target,
-		sf::RenderStates states = sf::RenderStates::Default
-	) const override
-	{
-		target.draw(rect_, states);
-		return;
-	}
-	
-	Line &setThickness(float thickness)
-	{
-		rect_.setSize({rect_.getSize().x, thickness});
-		return *this;
-	}
-	float getThickness() const
-	{
-		return rect_.getSize().y;
-	}
-
-	Line &setPosition(
-		sf::Vector2f const &begin, 
-		sf::Vector2f const &end
-	) 
-	{
-		rect_.setPosition(begin);
-		rect_.setSize({
-			std::hypot(end.x-begin.x, end.y-begin.y),
-			rect_.getSize().y
-		});
-		rect_.setOrigin(0.0f, rect_.getSize().y/2);
-		rect_.setRotation(
-			clever::togradus(clever::angle(
-				end.x-begin.x, end.y-begin.y, 1.0f, 0.0f
-			))
-		);
-		return *this;
-	}
-
-	Line &setColor(sf::Color const &newcolor)
-	{
-		rect_.setFillColor(newcolor);
-		return *this;
-	}
-	sf::Color const &getColor() const
-	{
-		return rect_.getFillColor();
-	}
-private:
-	sf::RectangleShape rect_;
-
-};
-
-
-
-
-
+template<typename T = float>
 struct ChartSettings
 {
+	typedef T value_type;
+
 	sf::Color color;
-	float thickness;
-	float overlayprior;
+	value_type thickness;
+	value_type overlayprior;
 
-	static ChartSettings const Default;
+	static ChartSettings const DEFAULT;
 };
-ChartSettings const ChartSettings::Default =
-	ChartSettings{sf::Color::Black, 2.0f, 0.0f};
+template<typename T>
+ChartSettings<T> const ChartSettings<T>::DEFAULT =
+	ChartSettings<T>{sf::Color::Black, 2.0f, 0.0f};
 
 
 
 
+template<typename T = float>
 struct AxisSettings
 {
+	typedef T value_type;
+
 	sf::Color color;
-	float thickness;
+	value_type thickness;
 
-	static AxisSettings const Default;
+	static AxisSettings const DEFAULT;
 };
-AxisSettings const AxisSettings::Default =
-	AxisSettings{sf::Color::Black, 1};
+template<typename T>
+AxisSettings<T> const AxisSettings<T>::DEFAULT =
+	AxisSettings<T>{sf::Color::Black, 4.0f};
 
+
+
+
+template<typename T = float>
+struct TagSettings
+{
+	typedef T value_type;
+
+	value_type length;
+	value_type thickness;
+	sf::Color color;
+	sf::Text text;
+
+	static TagSettings const DEFAULT;
+};
+template<typename T>
+TagSettings<T> const TagSettings<T>::DEFAULT =
+	TagSettings<T>{8.0f, 2.0f, sf::Color::Black};
+
+
+
+template<typename T = float>
+struct Tags
+{
+	typedef T value_type;
+
+	std::vector<value_type> abscissa;
+	std::vector<value_type> ordinate;
+};
 
 
 
@@ -147,7 +111,8 @@ public:
 
 	ChartPrinter &addChart(
 		chart_type newchart,
-		ChartSettings const &settings = ChartSettings::Default
+		ChartSettings<value_type> const &settings =
+			ChartSettings<value_type>::DEFAULT
 	)
 	{
 		charts_.push_back({newchart, settings});
@@ -173,14 +138,29 @@ public:
 	}
 
 
-	AxisSettings const &getAxisSettings() const
+	AxisSettings<value_type> const &getAxisSettings() const
 	{
 		return axis_;
 	}
-	ChartPrinter &setAxisSettings(AxisSettings const &newaxis)
+	ChartPrinter &setAxisSettings(
+		AxisSettings<value_type> const &newaxis
+	)
 	{
 		axis_ = newaxis;
 		ischanged_ = true;
+		return *this;
+	}
+
+
+	TagSettings<value_type> const &getTagSettings() const
+	{
+		return tagset_;
+	}
+	ChartPrinter &setTagSettings(
+		TagSettings<value_type> const &newtagset
+	)
+	{
+		tagset_ = newtagset;
 		return *this;
 	}
 
@@ -213,8 +193,14 @@ private:
 		std::sort(
 			charts_.begin(), charts_.end(),
 			[](
-				std::pair<chart_type, ChartSettings> const &lhs,
-				std::pair<chart_type, ChartSettings> const &rhs
+				std::pair<
+					chart_type,
+					ChartSettings<value_type>
+				> const &lhs,
+				std::pair<
+					chart_type,
+					ChartSettings<value_type>
+				> const &rhs
 			)->bool {
 				return lhs.second.overlayprior > rhs.second.overlayprior;
 			}
@@ -309,13 +295,38 @@ private:
 
 		return;
 	}
+	void calculate_tags_(size_t xcount = 10, size_t ycount = 10)
+	{
+			 
+	}
 
 	void draw_()
 	{
 		rtexture_.create(width_, height_);
 		rtexture_.clear(sf::Color::Transparent);
 
-		Line<> line;
+		draw_axis_();
+
+		for(size_t i = 0; i < 10; ++i) {
+			tags_.abscissa.push_back(i*100);
+			tags_.ordinate.push_back(i*100);
+		}
+		
+		tagset_.thickness = 5.0f;
+		tagset_.length = 30.0f;
+
+		draw_tags_();
+		draw_charts_();
+
+		sprite_.setTexture(rtexture_.getTexture());
+		sprite_.setTextureRect(
+			sf::IntRect(0, 0, int(width_), int(height_))
+		);
+		return;
+	}
+	void draw_axis_()
+	{
+		clever::Line<> line;
 		line.setThickness(axis_.thickness);
 		line.setColor(axis_.color);
 
@@ -330,6 +341,39 @@ private:
 			{axispoint_.x+1, height_}
 		);
 		rtexture_.draw(line);
+
+		return;
+	}
+	void draw_tags_()
+	{
+		sf::RectangleShape rect;
+		rect.setFillColor(tagset_.color);
+
+		rect.setSize({tagset_.thickness, tagset_.length});
+
+		for(auto b = tags_.abscissa.cbegin(), e = tags_.abscissa.cend(); b != e; ++b) {
+			rect.setPosition({
+				*b/xl_*width_ - tagset_.thickness/2.0f + axispoint_.x,
+				- tagset_.length/2.0f + axispoint_.y
+			});
+			rtexture_.draw(rect);
+		}
+
+		rect.setSize({tagset_.length, tagset_.thickness});
+
+		for(auto b = tags_.ordinate.cbegin(), e = tags_.ordinate.cend(); b != e; ++b) {
+			rect.setPosition({
+				axispoint_.x - tagset_.length/2.0f,
+				*b/yl_*height_ - tagset_.thickness/2.0f + axispoint_.y
+			});
+			rtexture_.draw(rect);
+		}
+
+		return;
+	}
+	void draw_charts_()
+	{
+		clever::Line<> line;
 
 		for(auto const &i : charts_) {
 			if(i.first->size() < 2)
@@ -351,22 +395,22 @@ private:
 				);
 				rtexture_.draw(line);
 			}
-
 		}
 
-		sprite_.setTexture(rtexture_.getTexture());
-		sprite_.setTextureRect(
-			sf::IntRect(0, 0, int(width_), int(height_))
-		);
+		return;
 	}
 
+
 	std::vector<
-		std::pair<chart_type, ChartSettings>
+		std::pair<chart_type, ChartSettings<value_type>>
 	> charts_;
 
-	AxisSettings axis_ = AxisSettings::Default;
+	AxisSettings<value_type> axis_ = AxisSettings<value_type>::DEFAULT;
 	sf::Vector2f axispoint_ = {0.0f, 0.0f};
 	float xl_ = 0.0f, yl_ = 0.0f;
+
+	TagSettings<value_type> tagset_ = TagSettings<value_type>::DEFAULT;
+	Tags<value_type> tags_;
 
 	float width_ = 300.0f, height_ = 300.0f;
 
