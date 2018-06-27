@@ -7,13 +7,20 @@ all: $(EXECUTABLE)
 
 run: all
 	$(EXECUTABLE) 
-main: main.o
-	g++ -o $(EXECUTABLE) $(LDFLAGS) main.o  $(LIBS)
+main: main.o ChartPrinter.o Line.o
+	g++ -o $(EXECUTABLE) $(LDFLAGS) main.o ChartPrinter.o Line.o $(LIBS)
 
 main.o: main.cpp ChartPrinter.hpp Line.hpp
-	g++ -Wall $(CFLAGS) -o main.o main.cpp
-	
+	g++ $(CFLAGS) -o main.o main.cpp
 
+ChartPrinter.o: ChartPrinter.cpp
+	g++ $(CFLAGS) -o ChartPrinter.o ChartPrinter.cpp
+
+Line.o: Line.cpp
+	g++ $(CFLAGS) -o Line.o Line.cpp
+
+
+	
 
 clean:
 	rm *.o $(EXECUTABLE)

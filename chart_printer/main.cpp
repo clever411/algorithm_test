@@ -55,7 +55,6 @@ void init_chart()
 	chart.setSize(
 		conversion<float>(window.getSize())
 	);
-	chart.setAxisSettings({Color::Black, 10.0f});
 	chart.addChart(
 		generate_chart(
 			0.0f, 1920.0f, 1.0f, 
@@ -84,7 +83,7 @@ void init_chart()
 		{ Color::Red, 1.0f, 0.0f }
 	);
 
-	chart.calculate_tags_byinterval(100.0f, 100.0f);
+	chart.calculate_tags_byinterval(100.0f, 50.0f);
 
 	return;
 }
