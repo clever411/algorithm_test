@@ -1,6 +1,10 @@
 #ifndef CLEVER_LINE_HPP
 #define CLEVER_LINE_HPP
 
+#include <cmath>
+
+#include <clever/SFML/HelpFunctions.hpp>
+
 namespace clever
 {
 
@@ -60,6 +64,18 @@ public:
 			))
 		);
 		return *this;
+	}
+	std::pair<sf::Vector2f, sf::Vector2f> getPosition() const
+	{
+		std::pair<sf::Vector2f, sf::Vector2f> res;
+		res.first = rect_.getPosition();
+		auto l = rect_.getSize().x;
+		auto angle = clever::toradian(rect_.getRotation());
+		res.second = {
+			res.first.x + l * std::sin( angle ),
+			res.first.y + l * std::cos( angle )
+		};
+		return res;
 	}
 
 	Line &setColor(sf::Color const &newcolor)

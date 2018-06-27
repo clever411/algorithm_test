@@ -1,5 +1,6 @@
 #include <cmath>
 #include <iostream>
+#include <fstream>
 #include <functional>
 
 #include <clever/SFML/HelpFunctions.hpp>
@@ -18,6 +19,8 @@ VideoMode const dsmode = VideoMode::getDesktopMode();
 string const TITLE = "Chart Printer";
 Event event;
 
+ChartPrinter<float> chart;
+
 void init_window()
 {
 	ContextSettings sets;
@@ -29,29 +32,26 @@ void init_window()
 }
 
 
-typedef shared_ptr<
-	vector<pair<float, float>>
-> chart_type;
+typedef std::vector< std::pair<float, float> > chart_type;
+typedef std::shared_ptr<chart_type> chartptr_type;
 
-chart_type generate_chart(
+chartptr_type generate_chart(
 	float start, float finish, float step,
 	function<float(float)> const &fun
 )
 {
-	chart_type chart(new typename chart_type::element_type());
+	chartptr_type achart(new chart_type);
 	
 	for(; start < finish; start += step) {
-		chart->push_back({start, fun(start)});
+		achart->push_back({start, fun(start)});
 	}
 
-	return chart;
+	return achart;
 }
 
-int main( int argc, char *argv[] )
-{
-	init_window();
 
-	ChartPrinter<float> chart;
+void init_chart() 
+{
 	chart.setSize(
 		conversion<float>(window.getSize())
 	);
@@ -72,7 +72,7 @@ int main( int argc, char *argv[] )
 				return pow(x, 0.75);
 			}
 		),
-		{ Color::Blue, 4.0f, 11.0f }
+		{ Color::Blue, 3.0f, 11.0f }
 	);
 	chart.addChart(
 		generate_chart(
@@ -84,6 +84,48 @@ int main( int argc, char *argv[] )
 		{ Color::Red, 1.0f, 0.0f }
 	);
 
+	chart.calculate_tags_byinterval(100.0f, 100.0f);
+
+	return;
+}
+
+void init_chart2(string filename)
+{
+	chartptr_type achart(new chart_type());
+	{
+		fstream fout(filename);
+		if(!fout.is_open()) {
+			std::cerr << "can't open file" << std::endl;
+			return;
+		}
+
+		achart->reserve(128);
+		float fbuf, sbuf;
+		while(true) {
+			fout >> fbuf >> sbuf;
+			if(!fout)
+				break;
+			achart->push_back({fbuf, sbuf});
+		}
+		achart->shrink_to_fit();
+	}
+	cout << *achart << endl;
+	chart.addChart(
+		achart,
+		{ Color::Black, 5.0f, 1.0f }
+	);
+
+	chart.setSize(conversion<float>(window.getSize()));
+	chart.calculate_tags_byinterval(1.0f, 1.0f);
+
+
+	return;
+}
+
+int main( int argc, char *argv[] )
+{
+	init_window();
+	init_chart();
 
 	while(window.isOpen()) {
 		if(window.pollEvent(event)) {

@@ -8,10 +8,10 @@
 #include <vector>
 
 #include <clever/SFML/HelpFunctions.hpp>
+#include <clever/SFML/Line.hpp>
 
 #include <SFML/Graphics.hpp>
 
-#include "Line.hpp"
 
 
 
@@ -64,7 +64,7 @@ struct TagSettings
 };
 template<typename T>
 TagSettings<T> const TagSettings<T>::DEFAULT =
-	TagSettings<T>{8.0f, 2.0f, sf::Color::Black};
+	TagSettings<T>{31.0f, 4.0f, sf::Color::Black};
 
 
 
@@ -76,6 +76,27 @@ struct Tags
 	std::vector<value_type> abscissa;
 	std::vector<value_type> ordinate;
 };
+
+
+
+
+
+template<typename T = float>
+struct GridSettings
+{
+	typedef T value_type;
+
+	bool enable;
+	value_type thickness;
+	sf::Color color;
+
+	static GridSettings const DEFAULT;
+};
+template<typename T>
+GridSettings<T> const GridSettings<T>::DEFAULT =
+	GridSettings<T>{true, 1.0f, sf::Color(0x22, 0x22, 0x22)};
+
+
 
 
 
@@ -138,10 +159,6 @@ public:
 	}
 
 
-	AxisSettings<value_type> const &getAxisSettings() const
-	{
-		return axis_;
-	}
 	ChartPrinter &setAxisSettings(
 		AxisSettings<value_type> const &newaxis
 	)
@@ -150,19 +167,86 @@ public:
 		ischanged_ = true;
 		return *this;
 	}
-
-
-	TagSettings<value_type> const &getTagSettings() const
+	AxisSettings<value_type> const &getAxisSettings() const
 	{
-		return tagset_;
+		return axis_;
 	}
+
+
 	ChartPrinter &setTagSettings(
 		TagSettings<value_type> const &newtagset
 	)
 	{
 		tagset_ = newtagset;
+		ischanged_ = true;
 		return *this;
 	}
+	TagSettings<value_type> const &getTagSettings() const
+	{
+		return tagset_;
+	}
+
+	ChartPrinter &setGridSettings(
+		GridSettings<value_type> const &gridset
+	)
+	{
+		gridset_ = gridset;
+		ischanged_ = true;
+		return *this;
+	}
+	GridSettings<value_type const &> getGridSettings() const
+	{
+		return gridset_;
+	}
+
+	void calculate_tags_bycount(size_t xcount = 10, size_t ycount = 10)
+	{
+		if(ischanged_) {
+			calculate_size_();
+			ischanged_ = false;
+		}
+
+		calculate_tags_byinterval(
+			xl_/(float)xcount, yl_/(float)ycount
+		);
+		return;
+	}
+
+	void calculate_tags_byinterval(float xinter, float yinter)
+	{
+		tags_.abscissa.clear();
+		tags_.ordinate.clear();
+
+		
+		if(ischanged_)
+			calculate_size_();
+
+		if(xl_ == 0 || yl_ == 0 || xinter == 0 || yinter == 0)
+			return;
+
+		float start = 0.0f;
+		while(start > xmin_) {
+			start -= xinter;
+		}
+		while(start <= xmin_+xl_) {
+			tags_.abscissa.push_back(start);
+			start += xinter;
+		}
+
+		start = 0.0f;
+		while(start > ymin_) {
+			start -= yinter;
+		}
+		while(start <= ymin_+xl_) {
+			tags_.ordinate.push_back(start);
+			start += yinter;
+		}
+
+		ischanged_ = true;
+
+		return;
+	}
+
 
 
 	ChartPrinter &setSize(float width, float height)
@@ -185,6 +269,16 @@ public:
 		return {width_, height_};
 	}
 
+	ChartPrinter &setPadding(float padding)
+	{
+		padding_ = padding;
+		ischanged_ = true;
+		return *this;
+	}
+	float getPadding() const
+	{
+		return padding_;
+	}
 private:
 
 	void adjust_()
@@ -216,8 +310,10 @@ private:
 
 	void calculate_size_()
 	{
-		value_type xmin = 0, xmax = 0;
-		value_type ymin = 0, ymax = 0;
+		xmin_ = 0;
+		value_type xmax = 0;
+		ymin_ = 0;
+		value_type ymax = 0;
 
 		typename std::vector<
 			std::pair<value_type, value_type>
@@ -237,8 +333,8 @@ private:
 				}
 			);
 
-			if(buf != b->first->cend() && buf->first < xmin)
-				xmin = buf->first;
+			if(buf != b->first->cend() && buf->first < xmin_)
+				xmin_ = buf->first;
 
 			buf = std::max_element(
 				b->first->cbegin(),
@@ -264,8 +360,8 @@ private:
 					return lhs.second < rhs.second;
 				}
 			);
-			if(buf != b->first->cend() && buf->second < ymin)
-				ymin = buf->second;
+			if(buf != b->first->cend() && buf->second < ymin_)
+				ymin_ = buf->second;
 
 			buf = std::max_element(
 				b->first->cbegin(),
@@ -281,23 +377,19 @@ private:
 				ymax = buf->second;
 		}
 		
-		xl_ = xmax-xmin;
-		yl_ = ymax-ymin;
+		xl_ = xmax-xmin_;
+		yl_ = ymax-ymin_;
 
 		if(xl_ == 0)
-			axispoint_.x = 0.0f;
+			axispoint_.x = padding_;
 		else
-			axispoint_.x = float(-xmin) / xl_ * width_;
+			axispoint_.x = float(-xmin_) / xl_ * (width_-2*padding_) + padding_;
 		if(yl_ == 0)
 			axispoint_.y = 0.0f;
 		else
-			axispoint_.y = float(-ymin) / yl_ * height_;
+			axispoint_.y = float(-ymin_) / yl_ * (height_-2*padding_) + padding_;
 
 		return;
-	}
-	void calculate_tags_(size_t xcount = 10, size_t ycount = 10)
-	{
-			 
 	}
 
 	void draw_()
@@ -306,15 +398,8 @@ private:
 		rtexture_.clear(sf::Color::Transparent);
 
 		draw_axis_();
-
-		for(size_t i = 0; i < 10; ++i) {
-			tags_.abscissa.push_back(i*100);
-			tags_.ordinate.push_back(i*100);
-		}
-		
-		tagset_.thickness = 5.0f;
-		tagset_.length = 30.0f;
-
+		if(gridset_.enable)
+			draw_grid_();
 		draw_tags_();
 		draw_charts_();
 
@@ -331,14 +416,14 @@ private:
 		line.setColor(axis_.color);
 
 		line.setPosition(
-			{0.0f, axispoint_.y+1},
-			{width_, axispoint_.y+1}
+			{0.0f, axispoint_.y},
+			{width_, axispoint_.y}
 		);
 		rtexture_.draw(line);
 
 		line.setPosition(
-			{axispoint_.x+1, 0.0f},
-			{axispoint_.x+1, height_}
+			{axispoint_.x, 0.0f},
+			{axispoint_.x, height_}
 		);
 		rtexture_.draw(line);
 
@@ -350,21 +435,50 @@ private:
 		rect.setFillColor(tagset_.color);
 
 		rect.setSize({tagset_.thickness, tagset_.length});
+		rect.setOrigin(rect.getSize()/2.0f);
 
 		for(auto b = tags_.abscissa.cbegin(), e = tags_.abscissa.cend(); b != e; ++b) {
 			rect.setPosition({
-				*b/xl_*width_ - tagset_.thickness/2.0f + axispoint_.x,
-				- tagset_.length/2.0f + axispoint_.y
+				*b/xl_*width_ + axispoint_.x,
+				axispoint_.y
 			});
 			rtexture_.draw(rect);
 		}
 
 		rect.setSize({tagset_.length, tagset_.thickness});
+		rect.setOrigin(rect.getSize()/2.0f);
 
 		for(auto b = tags_.ordinate.cbegin(), e = tags_.ordinate.cend(); b != e; ++b) {
 			rect.setPosition({
-				axispoint_.x - tagset_.length/2.0f,
-				*b/yl_*height_ - tagset_.thickness/2.0f + axispoint_.y
+				axispoint_.x,
+				*b/yl_*height_ + axispoint_.y
+			});
+			rtexture_.draw(rect);
+		}
+
+		return;
+	}
+	void draw_grid_()
+	{
+		sf::RectangleShape rect;
+		rect.setFillColor(gridset_.color);
+		
+		rect.setSize({width_, gridset_.thickness});
+		rect.setOrigin({0.0f, rect.getSize().y/2.0f});
+
+		for(auto b = tags_.ordinate.cbegin(), e = tags_.ordinate.cend(); b != e; ++b) {
+			rect.setPosition({
+				0.0f, *b/yl_*height_ + axispoint_.y
+			});
+			rtexture_.draw(rect);
+		}
+
+		rect.setSize({gridset_.thickness, height_});
+		rect.setOrigin({rect.getSize().x/2.0f, 0.0f});
+
+		for(auto b = tags_.abscissa.cbegin(), e = tags_.abscissa.cend(); b != e; ++b) {
+			rect.setPosition({
+				*b/xl_*width_ + axispoint_.x, 0.0f
 			});
 			rtexture_.draw(rect);
 		}
@@ -386,11 +500,11 @@ private:
 				line.setPosition(
 					{
 						(b-1)->first/xl_*width_ + axispoint_.x,
-						((b-1)->second/yl_*height_ + axispoint_.y)
+						(b-1)->second/yl_*height_ - axispoint_.y
 					},
 					{
 						b->first/xl_*width_ + axispoint_.x,
-						(b->second/yl_*height_ + axispoint_.y)
+						b->second/yl_*height_ - axispoint_.y
 					}
 				);
 				rtexture_.draw(line);
@@ -407,12 +521,15 @@ private:
 
 	AxisSettings<value_type> axis_ = AxisSettings<value_type>::DEFAULT;
 	sf::Vector2f axispoint_ = {0.0f, 0.0f};
-	float xl_ = 0.0f, yl_ = 0.0f;
+	float width_ = 300.0f, height_ = 300.0f;
+	float padding_ = 10.0f;
 
 	TagSettings<value_type> tagset_ = TagSettings<value_type>::DEFAULT;
 	Tags<value_type> tags_;
+	GridSettings<value_type> gridset_ = GridSettings<value_type>::DEFAULT;
 
-	float width_ = 300.0f, height_ = 300.0f;
+	float xl_ = 0.0f, yl_ = 0.0f;
+	float xmin_ = 0.0f, ymin_ = 0.0f;
 
 
 	bool ischanged_ = true;
