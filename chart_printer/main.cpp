@@ -19,7 +19,7 @@ VideoMode const dsmode = VideoMode::getDesktopMode();
 string const TITLE = "Chart Printer";
 Event event;
 
-ChartPrinter<float> chart;
+ChartPrinter chart;
 
 void init_window()
 {

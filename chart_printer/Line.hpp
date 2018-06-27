@@ -8,17 +8,14 @@
 namespace clever
 {
 
-template<typename T = void>
 class Line: public sf::Drawable
 {
 public:
-	typedef float value_type;
-
 	Line(
 		sf::Vector2f const &begin = {0.0f, 0.0f},
 		sf::Vector2f const &end = {0.0f, 0.0f},
 		sf::Color const &color = sf::Color::Black,
-		value_type thickness = 1.0f
+		float thickness = 1.0f
 	)
 	{
 		setPosition(begin, end);
@@ -36,13 +33,13 @@ public:
 		return;
 	}
 	
-	Line &setThickness(value_type thickness)
+	Line &setThickness(float thickness)
 	{
 		rect_.setSize({rect_.getSize().x, thickness});
 		rect_.setOrigin({0.0f, thickness/2.0f});
 		return *this;
 	}
-	value_type getThickness() const
+	float getThickness() const
 	{
 		return rect_.getSize().y;
 	}

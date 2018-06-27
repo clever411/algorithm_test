@@ -15,99 +15,81 @@
 
 
 
-template<typename T = float>
 struct ChartSettings
 {
-	typedef T value_type;
-
 	sf::Color color;
-	value_type thickness;
-	value_type overlayprior;
+	float thickness;
+	float overlayprior;
 
 	static ChartSettings const DEFAULT;
 };
-template<typename T>
-ChartSettings<T> const ChartSettings<T>::DEFAULT =
-	ChartSettings<T>{sf::Color::Black, 2.0f, 0.0f};
+
+ChartSettings const ChartSettings::DEFAULT =
+	ChartSettings{sf::Color::Black, 2.0f, 0.0f};
 
 
 
 
-template<typename T = float>
 struct AxisSettings
 {
-	typedef T value_type;
-
 	sf::Color color;
-	value_type thickness;
+	float thickness;
 
 	static AxisSettings const DEFAULT;
 };
-template<typename T>
-AxisSettings<T> const AxisSettings<T>::DEFAULT =
-	AxisSettings<T>{sf::Color::Black, 4.0f};
+AxisSettings const AxisSettings::DEFAULT =
+	AxisSettings{sf::Color::Black, 4.0f};
 
 
 
 
-template<typename T = float>
 struct TagSettings
 {
-	typedef T value_type;
-
-	value_type length;
-	value_type thickness;
+	float length;
+	float thickness;
 	sf::Color color;
 	sf::Text text;
 
 	static TagSettings const DEFAULT;
 };
-template<typename T>
-TagSettings<T> const TagSettings<T>::DEFAULT =
-	TagSettings<T>{31.0f, 4.0f, sf::Color::Black};
+TagSettings const TagSettings::DEFAULT =
+	TagSettings{31.0f, 4.0f, sf::Color::Black};
 
 
 
-template<typename T = float>
 struct Tags
 {
-	typedef T value_type;
-
-	std::vector<value_type> abscissa;
-	std::vector<value_type> ordinate;
+	std::vector<float> abscissa;
+	std::vector<float> ordinate;
 };
 
 
 
 
 
-template<typename T = float>
 struct GridSettings
 {
-	typedef T value_type;
-
 	bool enable;
-	value_type thickness;
+	float thickness;
 	sf::Color color;
 
 	static GridSettings const DEFAULT;
 };
-template<typename T>
-GridSettings<T> const GridSettings<T>::DEFAULT =
-	GridSettings<T>{true, 1.0f, sf::Color(0x22, 0x22, 0x22)};
+GridSettings const GridSettings::DEFAULT =
+	GridSettings{true, 1.0f, sf::Color(0x22, 0x22, 0x22)};
 
 
 
 
 
-template<typename T = float>
 class ChartPrinter: public sf::Drawable, public sf::Transformable
 {
 public:
-	typedef T value_type;
-	typedef std::shared_ptr<
-		std::vector<std::pair<value_type, value_type>>
+	typedef float value_type;
+	typedef std::vector<
+		std::pair<value_type, value_type>
 	> chart_type;
+	typedef std::shared_ptr<chart_type> chartptr_type;
 
 
 
@@ -131,16 +113,16 @@ public:
 
 
 	ChartPrinter &addChart(
-		chart_type newchart,
-		ChartSettings<value_type> const &settings =
-			ChartSettings<value_type>::DEFAULT
+		chartptr_type newchart,
+		ChartSettings const &settings =
+			ChartSettings::DEFAULT
 	)
 	{
 		charts_.push_back({newchart, settings});
 		ischanged_ = true;
 		return *this;
 	}
-	ChartPrinter &removeChart(chart_type const &chart)
+	ChartPrinter &removeChart(chartptr_type const &chart)
 	{
 		for(auto b = charts_.begin(), e = charts_.end(); b != e; ++b) {
 			if(b->first == chart) {
@@ -153,48 +135,51 @@ public:
 	}
 	ChartPrinter &clearCharts()
 	{
+		if(charts_.empty())
+			return *this;
 		charts_.clear();
 		ischanged_ = true;
 		return *this;
 	}
 
 
+
 	ChartPrinter &setAxisSettings(
-		AxisSettings<value_type> const &newaxis
+		AxisSettings const &newaxis
 	)
 	{
 		axis_ = newaxis;
 		ischanged_ = true;
 		return *this;
 	}
-	AxisSettings<value_type> const &getAxisSettings() const
+	AxisSettings const &getAxisSettings() const
 	{
 		return axis_;
 	}
 
 
 	ChartPrinter &setTagSettings(
-		TagSettings<value_type> const &newtagset
+		TagSettings const &newtagset
 	)
 	{
 		tagset_ = newtagset;
 		ischanged_ = true;
 		return *this;
 	}
-	TagSettings<value_type> const &getTagSettings() const
+	TagSettings const &getTagSettings() const
 	{
 		return tagset_;
 	}
 
 	ChartPrinter &setGridSettings(
-		GridSettings<value_type> const &gridset
+		GridSettings const &gridset
 	)
 	{
 		gridset_ = gridset;
 		ischanged_ = true;
 		return *this;
 	}
-	GridSettings<value_type const &> getGridSettings() const
+	GridSettings getGridSettings() const
 	{
 		return gridset_;
 	}
@@ -288,12 +273,12 @@ private:
 			charts_.begin(), charts_.end(),
 			[](
 				std::pair<
-					chart_type,
-					ChartSettings<value_type>
+					chartptr_type,
+					ChartSettings
 				> const &lhs,
 				std::pair<
-					chart_type,
-					ChartSettings<value_type>
+					chartptr_type,
+					ChartSettings
 				> const &rhs
 			)->bool {
 				return lhs.second.overlayprior > rhs.second.overlayprior;
@@ -311,12 +296,12 @@ private:
 	void calculate_size_()
 	{
 		xmin_ = 0;
-		value_type xmax = 0;
+		float xmax = 0;
 		ymin_ = 0;
-		value_type ymax = 0;
+		float ymax = 0;
 
 		typename std::vector<
-			std::pair<value_type, value_type>
+			std::pair<float, float>
 		>::const_iterator
 			buf
 		;
@@ -326,8 +311,8 @@ private:
 				b->first->cbegin(),
 				b->first->cend(),
 				[](
-					std::pair<value_type, value_type> const &lhs,
-					std::pair<value_type, value_type> const &rhs
+					std::pair<float, float> const &lhs,
+					std::pair<float, float> const &rhs
 				)->bool {
 					return lhs.first < rhs.first;
 				}
@@ -516,17 +501,17 @@ private:
 
 
 	std::vector<
-		std::pair<chart_type, ChartSettings<value_type>>
+		std::pair<chartptr_type, ChartSettings>
 	> charts_;
 
-	AxisSettings<value_type> axis_ = AxisSettings<value_type>::DEFAULT;
+	AxisSettings axis_ = AxisSettings::DEFAULT;
 	sf::Vector2f axispoint_ = {0.0f, 0.0f};
 	float width_ = 300.0f, height_ = 300.0f;
 	float padding_ = 10.0f;
 
-	TagSettings<value_type> tagset_ = TagSettings<value_type>::DEFAULT;
-	Tags<value_type> tags_;
-	GridSettings<value_type> gridset_ = GridSettings<value_type>::DEFAULT;
+	TagSettings tagset_ = TagSettings::DEFAULT;
+	Tags tags_;
+	GridSettings gridset_ = GridSettings::DEFAULT;
 
 	float xl_ = 0.0f, yl_ = 0.0f;
 	float xmin_ = 0.0f, ymin_ = 0.0f;
