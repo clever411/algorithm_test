@@ -3,13 +3,15 @@
 #include <fstream>
 #include <functional>
 
-#include <clever/SFML/HelpFunctions.hpp>
-#include <clever/IostreamFunction.hpp>
+#ifdef DEBUG
+	#include "debug.hpp"
+#endif
+
+
 
 #include "ChartPrinter.hpp"
 
 using namespace clever;
-
 using namespace sf;
 using namespace std;
 

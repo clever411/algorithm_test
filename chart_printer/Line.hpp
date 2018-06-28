@@ -5,6 +5,10 @@
 
 #include <clever/SFML/HelpFunctions.hpp>
 
+#ifdef DEBUG
+	#include "debug.hpp"
+#endif
+
 namespace clever
 {
 

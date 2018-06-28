@@ -2,12 +2,13 @@
 
 #include <algorithm>
 #include <cmath>
-
 #include <clever/SFML/HelpFunctions.hpp>
-#include <clever/IostreamFunction.hpp>
+
+#ifdef DEBUG
+	#include "debug.hpp"
+#endif
 
 #include "Line.hpp"
-
 
 ChartSettings const &ChartSettings::getDefault()
 {
