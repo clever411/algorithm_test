@@ -368,16 +368,19 @@ void ChartPrinter::calculate_size_()
 	xl_ = xmax-xmin_;
 	yl_ = ymax-ymin_;
 
-
 	// calculate axispoint
-	if(xl_ == 0 || yl_ == 0) {
+	if(xl_ == 0.0f || yl_ == 0.0f) {
 		axispoint_.x = padding_;
 		axispoint_.y = height_ - padding_;
+		xk_ = yk_ = 0.0f;
 	}
 	else {
-		axispoint_.x = -xmin_ / xl_ * (width_-2*padding_) + padding_;
+		xk_ = (width_-2.0f*padding_) / xl_;
+		yk_ = (height_-2.0f*padding_) / yl_;
+
+		axispoint_.x = -xmin_ / xl_ * (width_-2.0f*padding_) + padding_;
 		axispoint_.y = height_ -
-			(-ymin_ / yl_ * (height_-2*padding_) + padding_);
+			(-ymin_ / yl_ * (height_-2.0f*padding_) + padding_);
 	}
 
 	return;
@@ -415,24 +418,24 @@ void ChartPrinter::draw_grid_()
 	clever::Line line;
 	line.setColor(gridset_.color);
 	line.setThickness(gridset_.thickness);
-	float buf;
+	sf::Vector2f buf;
 
 	// horizontal lines
 	for(auto b = tags_.ordinate.cbegin(), e = tags_.ordinate.cend(); b != e; ++b) {
-		buf = - *b/yl_*(height_-2*padding_) + axispoint_.y;
+		buf = descartes_to_pixels({0.0f, *b});
 		line.setPosition(
-			{ 0.0f, buf },
-			{ width_, buf }
+			{ 0.0f, buf.y },
+			{ width_, buf.y }
 		);
 		rtexture_.draw(line);
 	}
 
 	// vertical lines
 	for(auto b = tags_.abscissa.cbegin(), e = tags_.abscissa.cend(); b != e; ++b) {
-		buf = *b/xl_*(width_-2*padding_) + axispoint_.x;
+		buf = descartes_to_pixels({*b, 0.0f});
 		line.setPosition(
-			{ buf, 0.0f },
-			{ buf, height_ }
+			{ buf.x, 0.0f },
+			{ buf.x, height_ }
 		);
 		rtexture_.draw(line);
 	}
@@ -532,8 +535,8 @@ void ChartPrinter::draw_charts_()
 sf::Vector2f ChartPrinter::descartes_to_pixels(sf::Vector2f const &point)
 {
 	return sf::Vector2f{
-		point.x/xl_*(width_-2*padding_) + axispoint_.x,
-		- point.y/yl_*(height_-2*padding_) + axispoint_.y
+		point.x*xk_ + axispoint_.x,
+		- point.y*yk_ + axispoint_.y
 	};
 }
 

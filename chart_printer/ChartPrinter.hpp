@@ -159,6 +159,7 @@ private:
 	//size on descartes
 	float xl_ = 0.0f, yl_ = 0.0f;
 	float xmin_ = 0.0f, ymin_ = 0.0f;
+	float xk_ = 0.0f, yk_ = 0.0f;
 
 	// tags on descartes
 	Tags tags_;

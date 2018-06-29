@@ -51,7 +51,7 @@ chartptr_type generate_chart(
 )
 {
 	chartptr_type achart(new chart_type);
-	
+	achart->reserve( int( (finish-start)/step ) + 2 );
 	for(; start < finish; start += step) {
 		achart->push_back({start, fun(start)});
 	}
@@ -61,6 +61,9 @@ chartptr_type generate_chart(
 
 void init_chart() 
 {
+	constexpr static float const MAX_X = 500.0f;
+	constexpr static float const STEP = 0.2f;
+	 
 	chart.setSize(
 		conversion<float>(window.getSize())
 	);
@@ -68,33 +71,33 @@ void init_chart()
 	chart.setAxisSettings(AxisSettings{Color::Blue, 10.0f});
 	chart.addChart(
 		generate_chart(
-			0.0f, 1920.0f, 50.0f, 
-			[](float x)->float {
-				return sqrt(x);
-			}
-		),
-		{ Color::Magenta, 2.0f, 10.0f }
-	);
-	chart.addChart(
-		generate_chart(
-			0.0f, 1920.0f, 1.0f, 
+			0.0f, MAX_X, STEP, 
 			[](float x)->float {
 				return pow(x, 0.75);
 			}
 		),
-		{ Color::Blue, 3.0f, 11.0f }
+		{ Color::Blue, 3.0f, 3.0f }
 	);
 	chart.addChart(
 		generate_chart(
-			0.0f, 1920.0f, 1.0f, 
+			0.0f, MAX_X, STEP, 
+			[](float x)->float {
+				return sqrt(x);
+			}
+		),
+		{ Color::Red, 3.0f, 2.0f }
+	);
+	chart.addChart(
+		generate_chart(
+			0.0f, MAX_X, STEP, 
 			[](float x)->float {
 				return pow(x, 0.4);
 			}
 		),
-		{ Color::Red, 1.0f, 0.0f }
+		{ Color::Black, 3.0f, 1.0f }
 	);
 
-	chart.calculate_tags_byinterval(100.0f, 50.0f);
+	chart.calculate_tags_byinterval(10.0f, 10.0f);
 
 	return;
 }
