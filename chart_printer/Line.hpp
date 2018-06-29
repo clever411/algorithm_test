@@ -9,12 +9,20 @@
 	#include "debug.hpp"
 #endif
 
+
+
+
+
 namespace clever
 {
+
+
+
 
 class Line: public sf::Drawable
 {
 public:
+	// using methods
 	Line(
 		sf::Vector2f const &begin = {0.0f, 0.0f},
 		sf::Vector2f const &end = {0.0f, 0.0f},
@@ -27,15 +35,18 @@ public:
 		sf::RenderStates states = sf::RenderStates::Default
 	) const override;
 	
+	// thickness
 	Line &setThickness(float thickness);
 	float getThickness() const;
 
+	// position
 	Line &setPosition(
 		sf::Vector2f const &begin, 
 		sf::Vector2f const &end
 	);
 	std::pair<sf::Vector2f, sf::Vector2f> getPosition() const;
 
+	// color
 	Line &setColor(sf::Color const &newcolor);
 	sf::Color const &getColor() const;
 
@@ -45,7 +56,11 @@ private:
 };
 
 
+
 }
+
+
+
 
 
 #endif

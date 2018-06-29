@@ -61,6 +61,7 @@ struct GridSettings
 class ChartPrinter: public sf::Drawable, public sf::Transformable
 {
 public:
+	// typedef
 	typedef float value_type;
 	typedef std::vector<
 		std::pair<value_type, value_type>
@@ -69,7 +70,7 @@ public:
 
 
 
-
+	// using methods
 	void update();
 
 	void draw(
@@ -78,6 +79,21 @@ public:
 	) const override;
 
 
+
+
+	// size
+	ChartPrinter &setSize(float width, float height);
+	ChartPrinter &setSize(sf::Vector2f size);
+	sf::Vector2f getSize() const;
+
+
+	// padding
+	ChartPrinter &setPadding(float padding);
+	float getPadding() const;
+
+
+
+	// charts
 	ChartPrinter &addChart(
 		chartptr_type newchart,
 		ChartSettings const &settings =
@@ -88,67 +104,72 @@ public:
 
 
 
+	// axis settings
 	ChartPrinter &setAxisSettings(
 		AxisSettings const &newaxis
 	);
 	AxisSettings const &getAxisSettings() const;
 
 
+	// tag settings
 	ChartPrinter &setTagSettings(
 		TagSettings const &newtagset
 	);
 	TagSettings const &getTagSettings() const;
 
-	ChartPrinter &setGridSettings(
-		GridSettings const &gridset
-	);
-	GridSettings getGridSettings() const;
-
 	void calculate_tags_bycount(size_t xcount = 10, size_t ycount = 10);
-
 	void calculate_tags_byinterval(float xinter, float yinter);
 
 
+	// grid settings
+	ChartPrinter &setGridSettings(
+		GridSettings const &gridset
+	);
+	GridSettings const &getGridSettings() const;
 
-	ChartPrinter &setSize(float width, float height);
-	ChartPrinter &setSize(sf::Vector2f size);
 
-	sf::Vector2f getSize() const;
 
-	ChartPrinter &setPadding(float padding);
-	float getPadding() const;
+
+
 
 
 private:
+	// service methods
 	void adjust_();
 
 	void calculate_size_();
 
 	void draw_();
+	void draw_grid_();
 	void draw_axis_();
 	void draw_tags_();
-	void draw_grid_();
 	void draw_charts_();
 
+	sf::Vector2f descartes_to_pixels(sf::Vector2f const &point);
 
-
+	// size on pixels
 	float width_ = 300.0f, height_ = 300.0f;
 	float padding_ = 0.0f;
 	sf::Vector2f axispoint_ = {0.0f, 0.0f};
-	AxisSettings axis_ = AxisSettings::getDefault();
 
+	// charts
 	std::vector<
 		std::pair<chartptr_type, ChartSettings>
 	> charts_;
+	//size on descartes
 	float xl_ = 0.0f, yl_ = 0.0f;
 	float xmin_ = 0.0f, ymin_ = 0.0f;
 
+	// tags on descartes
 	Tags tags_;
+
+	// settings
+	AxisSettings axis_ = AxisSettings::getDefault();
 	TagSettings tagset_ = TagSettings::getDefault();
 	GridSettings gridset_ = GridSettings::getDefault();
 
 
-
+	// technical
 	bool ischanged_ = true;
 
 	sf::RenderTexture rtexture_;

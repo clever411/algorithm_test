@@ -10,6 +10,11 @@
 
 #include "Line.hpp"
 
+
+
+
+
+// structures
 ChartSettings const &ChartSettings::getDefault()
 {
 	static ChartSettings const singelton {
@@ -46,6 +51,7 @@ GridSettings const &GridSettings::getDefault()
 
 
 
+// using methods
 void ChartPrinter::update()
 {
 	if(ischanged_)
@@ -64,6 +70,52 @@ void ChartPrinter::draw(
 }
 
 
+
+// size
+ChartPrinter &ChartPrinter::setSize(float width, float height)
+{
+	if(width_ == width && height_ == height)
+		return *this;
+	width_ = width;
+	height_ = height;
+	ischanged_ = true;
+	return *this;
+}
+ChartPrinter &ChartPrinter::setSize(sf::Vector2f size)
+{
+	if(width_ == size.x && height_ == size.y)
+		return *this;
+	width_ = size.x;
+	height_ = size.y;
+	ischanged_ = true;
+	return *this;
+}
+
+sf::Vector2f ChartPrinter::getSize() const
+{
+	return {width_, height_};
+}
+
+
+// padding
+ChartPrinter &ChartPrinter::setPadding(float padding)
+{
+	if(padding_ == padding)
+		return *this;
+	padding_ = padding;
+	ischanged_ = true;
+	return *this;
+}
+float ChartPrinter::getPadding() const
+{
+	return padding_;
+}
+
+
+
+
+
+// charts
 ChartPrinter &ChartPrinter::addChart(
 	chartptr_type newchart,
 	ChartSettings const &settings
@@ -95,10 +147,18 @@ ChartPrinter &ChartPrinter::clearCharts()
 
 
 
+
+
+// axis settings
 ChartPrinter &ChartPrinter::setAxisSettings(
 	AxisSettings const &newaxis
 )
 {
+	if(
+		axis_.color == newaxis.color &&
+		axis_.thickness == newaxis.thickness
+	)
+		return *this;
 	axis_ = newaxis;
 	ischanged_ = true;
 	return *this;
@@ -109,6 +169,9 @@ AxisSettings const &ChartPrinter::getAxisSettings() const
 }
 
 
+
+
+// tag settings
 ChartPrinter &ChartPrinter::setTagSettings(
 	TagSettings const &newtagset
 )
@@ -117,22 +180,10 @@ ChartPrinter &ChartPrinter::setTagSettings(
 	ischanged_ = true;
 	return *this;
 }
+
 TagSettings const &ChartPrinter::getTagSettings() const
 {
 	return tagset_;
-}
-
-ChartPrinter &ChartPrinter::setGridSettings(
-	GridSettings const &gridset
-)
-{
-	gridset_ = gridset;
-	ischanged_ = true;
-	return *this;
-}
-GridSettings ChartPrinter::getGridSettings() const
-{
-	return gridset_;
 }
 
 void ChartPrinter::calculate_tags_bycount(size_t xcount, size_t ycount)
@@ -185,41 +236,31 @@ void ChartPrinter::calculate_tags_byinterval(float xinter, float yinter)
 
 
 
-ChartPrinter &ChartPrinter::setSize(float width, float height)
+
+// grid settings
+ChartPrinter &ChartPrinter::setGridSettings(
+	GridSettings const &gridset
+)
 {
-	width_ = width;
-	height_ = height;
+	gridset_ = gridset;
 	ischanged_ = true;
 	return *this;
 }
-ChartPrinter &ChartPrinter::setSize(sf::Vector2f size)
+GridSettings const &ChartPrinter::getGridSettings() const
 {
-	width_ = size.x;
-	height_ = size.y;
-	ischanged_ = true;
-	return *this;
-}
-
-sf::Vector2f ChartPrinter::getSize() const
-{
-	return {width_, height_};
-}
-
-ChartPrinter &ChartPrinter::setPadding(float padding)
-{
-	padding_ = padding;
-	ischanged_ = true;
-	return *this;
-}
-float ChartPrinter::getPadding() const
-{
-	return padding_;
+	return gridset_;
 }
 
 
+
+
+
+
+
+// implement
 void ChartPrinter::adjust_()
 {
-	// for overlay
+	// sorting for overlay
 	std::sort(
 		charts_.begin(), charts_.end(),
 		[](
@@ -236,28 +277,34 @@ void ChartPrinter::adjust_()
 		}
 	);
 
+	// calc&draw
 	calculate_size_();
-
 	draw_();
 
+	// it's all
 	ischanged_ = false;
 	return;
 }
 
+
 void ChartPrinter::calculate_size_()
 {
-	xmin_ = 0;
-	float xmax = 0;
-	ymin_ = 0;
-	float ymax = 0;
+	// null always appears
+	xmin_ = 0.0f;
+	float xmax = 0.0f;
+	ymin_ = 0.0f;
+	float ymax = 0.0f;
 
+	// buffer for elements
 	typename std::vector<
 		std::pair<float, float>
 	>::const_iterator
 		buf
 	;
 
+	// search minimum, maximum x, y
 	for(auto b = charts_.begin(), e = charts_.end(); b != e; ++b) {
+		// minimum x
 		buf = std::min_element(
 			b->first->cbegin(),
 			b->first->cend(),
@@ -272,6 +319,7 @@ void ChartPrinter::calculate_size_()
 		if(buf != b->first->cend() && buf->first < xmin_)
 			xmin_ = buf->first;
 
+		// maximum x
 		buf = std::max_element(
 			b->first->cbegin(),
 			b->first->cend(),
@@ -286,6 +334,7 @@ void ChartPrinter::calculate_size_()
 		if(buf != b->first->cend() && buf->first > xmax)
 			xmax = buf->first;
 
+		// minimum y
 		buf = std::min_element(
 			b->first->cbegin(),
 			b->first->cend(),
@@ -299,6 +348,7 @@ void ChartPrinter::calculate_size_()
 		if(buf != b->first->cend() && buf->second < ymin_)
 			ymin_ = buf->second;
 
+		// maximum y
 		buf = std::max_element(
 			b->first->cbegin(),
 			b->first->cend(),
@@ -313,50 +363,99 @@ void ChartPrinter::calculate_size_()
 			ymax = buf->second;
 	}
 
+
+	// calculate length
 	xl_ = xmax-xmin_;
 	yl_ = ymax-ymin_;
 
-	if(xl_ == 0)
+
+	// calculate axispoint
+	if(xl_ == 0 || yl_ == 0) {
 		axispoint_.x = padding_;
-	else
-		axispoint_.x = float(-xmin_) / xl_ * (width_-2*padding_) + padding_;
-	if(yl_ == 0)
-		axispoint_.y = 0.0f;
-	else
-		axispoint_.y = float(-ymin_) / yl_ * (height_-2*padding_) + padding_;
+		axispoint_.y = height_ - padding_;
+	}
+	else {
+		axispoint_.x = -xmin_ / xl_ * (width_-2*padding_) + padding_;
+		axispoint_.y = height_ -
+			(-ymin_ / yl_ * (height_-2*padding_) + padding_);
+	}
 
 	return;
 }
 
+
 void ChartPrinter::draw_()
 {
+	// preparation render texture
 	rtexture_.create(width_, height_);
 	rtexture_.clear(sf::Color::Transparent);
 
-	draw_axis_();
+
+	// draw
 	if(gridset_.enable)
 		draw_grid_();
+	draw_axis_();
 	draw_tags_();
 	draw_charts_();
 
+	rtexture_.display();
+
+	// adjust sprite
 	sprite_.setTexture(rtexture_.getTexture());
 	sprite_.setTextureRect(
 		sf::IntRect(0, 0, int(width_), int(height_))
 	);
+
 	return;
 }
+
+void ChartPrinter::draw_grid_()
+{
+	// create line and buffer for calculation
+	clever::Line line;
+	line.setColor(gridset_.color);
+	line.setThickness(gridset_.thickness);
+	float buf;
+
+	// horizontal lines
+	for(auto b = tags_.ordinate.cbegin(), e = tags_.ordinate.cend(); b != e; ++b) {
+		buf = - *b/yl_*(height_-2*padding_) + axispoint_.y;
+		line.setPosition(
+			{ 0.0f, buf },
+			{ width_, buf }
+		);
+		rtexture_.draw(line);
+	}
+
+	// vertical lines
+	for(auto b = tags_.abscissa.cbegin(), e = tags_.abscissa.cend(); b != e; ++b) {
+		buf = *b/xl_*(width_-2*padding_) + axispoint_.x;
+		line.setPosition(
+			{ buf, 0.0f },
+			{ buf, height_ }
+		);
+		rtexture_.draw(line);
+	}
+
+	return;
+}
+
 void ChartPrinter::draw_axis_()
 {
+	// create line
 	clever::Line line;
 	line.setThickness(axis_.thickness);
 	line.setColor(axis_.color);
 
+
+	// abscissa
 	line.setPosition(
 		{0.0f, axispoint_.y},
 		{width_, axispoint_.y}
 	);
 	rtexture_.draw(line);
 
+	// ordinate
 	line.setPosition(
 		{axispoint_.x, 0.0f},
 		{axispoint_.x, height_}
@@ -365,64 +464,44 @@ void ChartPrinter::draw_axis_()
 
 	return;
 }
+
 void ChartPrinter::draw_tags_()
 {
+	// create Rectangle
 	sf::RectangleShape rect;
 	rect.setFillColor(tagset_.color);
 
+
+	// for abscissa
 	rect.setSize({tagset_.thickness, tagset_.length});
 	rect.setOrigin(rect.getSize()/2.0f);
 
 	for(auto b = tags_.abscissa.cbegin(), e = tags_.abscissa.cend(); b != e; ++b) {
-		rect.setPosition({
-			*b/xl_*width_ + axispoint_.x,
-			axispoint_.y
-		});
+		rect.setPosition(
+			descartes_to_pixels({*b, 0})
+		);
 		rtexture_.draw(rect);
 	}
 
+
+	// for ordinate
 	rect.setSize({tagset_.length, tagset_.thickness});
 	rect.setOrigin(rect.getSize()/2.0f);
 
 	for(auto b = tags_.ordinate.cbegin(), e = tags_.ordinate.cend(); b != e; ++b) {
-		rect.setPosition({
-			axispoint_.x,
-			*b/yl_*height_ + axispoint_.y
-		});
+
+		rect.setPosition(
+			descartes_to_pixels({0, *b})
+		);
 		rtexture_.draw(rect);
 	}
 
 	return;
 }
-void ChartPrinter::draw_grid_()
-{
-	sf::RectangleShape rect;
-	rect.setFillColor(gridset_.color);
 
-	rect.setSize({width_, gridset_.thickness});
-	rect.setOrigin({0.0f, rect.getSize().y/2.0f});
-
-	for(auto b = tags_.ordinate.cbegin(), e = tags_.ordinate.cend(); b != e; ++b) {
-		rect.setPosition({
-			0.0f, *b/yl_*height_ + axispoint_.y
-		});
-		rtexture_.draw(rect);
-	}
-
-	rect.setSize({gridset_.thickness, height_});
-	rect.setOrigin({rect.getSize().x/2.0f, 0.0f});
-
-	for(auto b = tags_.abscissa.cbegin(), e = tags_.abscissa.cend(); b != e; ++b) {
-		rect.setPosition({
-			*b/xl_*width_ + axispoint_.x, 0.0f
-		});
-		rtexture_.draw(rect);
-	}
-
-	return;
-}
 void ChartPrinter::draw_charts_()
 {
+
 	clever::Line line;
 
 	for(auto const &i : charts_) {
@@ -432,17 +511,16 @@ void ChartPrinter::draw_charts_()
 		line.setColor(i.second.color);
 		line.setThickness(i.second.thickness);
 
+		sf::Vector2f begin, end;
 		for(auto b = i.first->begin()+1, e = i.first->end(); b != e; ++b) {
+
 			line.setPosition(
-				{
-					(b-1)->first/xl_*width_ + axispoint_.x,
-					(b-1)->second/yl_*height_ - axispoint_.y
-				},
-				{
-					b->first/xl_*width_ + axispoint_.x,
-					b->second/yl_*height_ - axispoint_.y
-				}
+				descartes_to_pixels({
+					std::prev(b)->first, std::prev(b)->second
+				}),
+				descartes_to_pixels({b->first, b->second})
 			);
+
 			rtexture_.draw(line);
 		}
 	}
@@ -450,6 +528,14 @@ void ChartPrinter::draw_charts_()
 	return;
 }
 
+
+sf::Vector2f ChartPrinter::descartes_to_pixels(sf::Vector2f const &point)
+{
+	return sf::Vector2f{
+		point.x/xl_*(width_-2*padding_) + axispoint_.x,
+		- point.y/yl_*(height_-2*padding_) + axispoint_.y
+	};
+}
 
 
 

@@ -7,21 +7,23 @@
 	#include "debug.hpp"
 #endif
 
-
-
 #include "ChartPrinter.hpp"
+
 
 using namespace clever;
 using namespace sf;
 using namespace std;
 
 
+
+
+
+// window and other about SFML
 RenderWindow window;
 VideoMode const dsmode = VideoMode::getDesktopMode();
 string const TITLE = "Chart Printer";
 Event event;
 
-ChartPrinter chart;
 
 void init_window()
 {
@@ -34,8 +36,14 @@ void init_window()
 }
 
 
+
+
+
+// charts and other about it
 typedef std::vector< std::pair<float, float> > chart_type;
 typedef std::shared_ptr<chart_type> chartptr_type;
+
+ChartPrinter chart;
 
 chartptr_type generate_chart(
 	float start, float finish, float step,
@@ -51,15 +59,16 @@ chartptr_type generate_chart(
 	return achart;
 }
 
-
 void init_chart() 
 {
 	chart.setSize(
 		conversion<float>(window.getSize())
 	);
+	chart.setPadding(100.0f);
+	chart.setAxisSettings(AxisSettings{Color::Blue, 10.0f});
 	chart.addChart(
 		generate_chart(
-			0.0f, 1920.0f, 1.0f, 
+			0.0f, 1920.0f, 50.0f, 
 			[](float x)->float {
 				return sqrt(x);
 			}
@@ -92,6 +101,7 @@ void init_chart()
 
 void init_chart2(string filename)
 {
+	chart.setAxisSettings({Color::Blue, 10.0f});
 	chartptr_type achart(new chart_type());
 	{
 		fstream fout(filename);
@@ -123,10 +133,15 @@ void init_chart2(string filename)
 	return;
 }
 
+
+
+
+// main
 int main( int argc, char *argv[] )
 {
 	init_window();
 	init_chart();
+	
 
 	while(window.isOpen()) {
 		if(window.pollEvent(event)) {
@@ -134,8 +149,10 @@ int main( int argc, char *argv[] )
 				window.close();
 			}
 		}
+		// update
 		chart.update();
 
+		// draw
 		window.clear(Color::White);
 		window.draw(chart);
 		window.display();
