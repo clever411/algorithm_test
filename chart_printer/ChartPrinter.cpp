@@ -186,52 +186,60 @@ TagSettings const &ChartPrinter::getTagSettings() const
 	return tagset_;
 }
 
-void ChartPrinter::calculate_tags_bycount(size_t xcount, size_t ycount)
+ChartPrinter &ChartPrinter::generateTagsByCount(size_t xcount, size_t ycount)
 {
 	if(ischanged_) {
 		calculate_size_();
 		ischanged_ = false;
 	}
 
-	calculate_tags_byinterval(
+	generateTagsByInterval(
 		xl_/(float)xcount, yl_/(float)ycount
 	);
-	return;
+	return *this;
 }
 
-void ChartPrinter::calculate_tags_byinterval(float xinter, float yinter)
+ChartPrinter &ChartPrinter::generateTagsByInterval(float xinter, float yinter)
 {
+	// clear old tags
 	tags_.abscissa.clear();
 	tags_.ordinate.clear();
 
 	
+	// preparation
 	if(ischanged_)
 		calculate_size_();
-
 	if(xl_ == 0 || yl_ == 0 || xinter == 0 || yinter == 0)
-		return;
+		return *this;
 
-	float start = 0.0f;
-	while(start > xmin_) {
+	float start;
+
+
+	// generate abscissa tags
+	start = 0.0f;
+	while(start > pixels_to_descartes({0.0f, 0.0f}).x) {
 		start -= xinter;
 	}
-	while(start <= xmin_+xl_) {
+	while(start < pixels_to_descartes({width_, 0.0f}).x) {
 		tags_.abscissa.push_back(start);
 		start += xinter;
 	}
 
+
+	// generate ordinate tags
 	start = 0.0f;
-	while(start > ymin_) {
+	while(start > pixels_to_descartes({0.0f, height_}).y) {
 		start -= yinter;
 	}
-	while(start <= ymin_+xl_) {
+	while(start < pixels_to_descartes({0.0f, 0.0f}).y) {
 		tags_.ordinate.push_back(start);
 		start += yinter;
 	}
 
+	// it's all
 	ischanged_ = true;
 
-	return;
+	return *this;
 }
 
 
@@ -532,14 +540,22 @@ void ChartPrinter::draw_charts_()
 }
 
 
-sf::Vector2f ChartPrinter::descartes_to_pixels(sf::Vector2f const &point)
+
+sf::Vector2f ChartPrinter::descartes_to_pixels(sf::Vector2f const &point) const
 {
-	return sf::Vector2f{
+	return sf::Vector2f {
 		point.x*xk_ + axispoint_.x,
 		- point.y*yk_ + axispoint_.y
 	};
 }
 
+sf::Vector2f ChartPrinter::pixels_to_descartes(sf::Vector2f const &point) const
+{
+	return sf::Vector2f {
+		(point.x - axispoint_.x)/xk_,
+		-(point.y - axispoint_.y)/yk_
+	};
+}
 
 
 

@@ -25,26 +25,16 @@ string const TITLE = "Chart Printer";
 Event event;
 
 
-void init_window()
-{
-	ContextSettings sets;
-	sets.antialiasingLevel = 8;
-	window.create(dsmode, TITLE, Style::None, sets);
-	window.setPosition({0, 0});
-	window.setVerticalSyncEnabled(true);
-	return;
-}
-
-
-
-
-
-// charts and other about it
 typedef std::vector< std::pair<float, float> > chart_type;
 typedef std::shared_ptr<chart_type> chartptr_type;
 
 ChartPrinter chart;
 
+
+
+
+
+// functions
 chartptr_type generate_chart(
 	float start, float finish, float step,
 	function<float(float)> const &fun
@@ -57,6 +47,18 @@ chartptr_type generate_chart(
 	}
 
 	return achart;
+}
+
+
+// init
+void init_window()
+{
+	ContextSettings sets;
+	sets.antialiasingLevel = 8;
+	window.create(dsmode, TITLE, Style::None, sets);
+	window.setPosition({0, 0});
+	window.setVerticalSyncEnabled(true);
+	return;
 }
 
 void init_chart() 
@@ -97,7 +99,7 @@ void init_chart()
 		{ Color::Black, 3.0f, 1.0f }
 	);
 
-	chart.calculate_tags_byinterval(10.0f, 10.0f);
+	chart.generateTagsByInterval(10.0f, 10.0f);
 
 	return;
 }
@@ -130,11 +132,12 @@ void init_chart2(string filename)
 	);
 
 	chart.setSize(conversion<float>(window.getSize()));
-	chart.calculate_tags_byinterval(1.0f, 1.0f);
+	chart.generateTagsByInterval(1.0f, 1.0f);
 
 
 	return;
 }
+
 
 
 
@@ -149,7 +152,13 @@ int main( int argc, char *argv[] )
 	while(window.isOpen()) {
 		if(window.pollEvent(event)) {
 			if(event.type == Event::KeyPressed) {
-				window.close();
+				if(event.key.code == Keyboard::I) {
+					cout << chart.pixels_to_descartes(
+						conversion<float>(Mouse::getPosition(window))
+					) << endl;
+				}
+				else if(event.key.code == Keyboard::C)
+					window.close();
 			}
 		}
 		// update

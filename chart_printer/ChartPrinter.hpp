@@ -117,8 +117,9 @@ public:
 	);
 	TagSettings const &getTagSettings() const;
 
-	void calculate_tags_bycount(size_t xcount = 10, size_t ycount = 10);
-	void calculate_tags_byinterval(float xinter, float yinter);
+	ChartPrinter &generateTagsByCount(size_t xcount = 10, size_t ycount = 10);
+	ChartPrinter &generateTagsByInterval(float xinter, float yinter);
+
 
 
 	// grid settings
@@ -132,6 +133,7 @@ public:
 
 
 
+	sf::Vector2f pixels_to_descartes(sf::Vector2f const &point) const;
 
 private:
 	// service methods
@@ -145,7 +147,7 @@ private:
 	void draw_tags_();
 	void draw_charts_();
 
-	sf::Vector2f descartes_to_pixels(sf::Vector2f const &point);
+	sf::Vector2f descartes_to_pixels(sf::Vector2f const &point) const;
 
 	// size on pixels
 	float width_ = 300.0f, height_ = 300.0f;
