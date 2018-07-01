@@ -34,7 +34,8 @@ AxisSettings const &AxisSettings::getDefault()
 TagSettings const &TagSettings::getDefault()
 {
 	static TagSettings const singelton {
-		20.0f, 3.0f, sf::Color::Black
+		20.0f, 3.0f, 10.0f, 10.0f, 1.0f,
+		sf::Color::Black, sf::Color::Black
 	};
 	return singelton;
 }
@@ -186,62 +187,6 @@ TagSettings const &ChartPrinter::getTagSettings() const
 	return tagset_;
 }
 
-ChartPrinter &ChartPrinter::generateTagsByCount(size_t xcount, size_t ycount)
-{
-	if(ischanged_) {
-		calculate_size_();
-		ischanged_ = false;
-	}
-
-	generateTagsByInterval(
-		xl_/(float)xcount, yl_/(float)ycount
-	);
-	return *this;
-}
-
-ChartPrinter &ChartPrinter::generateTagsByInterval(float xinter, float yinter)
-{
-	// clear old tags
-	tags_.abscissa.clear();
-	tags_.ordinate.clear();
-
-	
-	// preparation
-	if(ischanged_)
-		calculate_size_();
-	if(xl_ == 0 || yl_ == 0 || xinter == 0 || yinter == 0)
-		return *this;
-
-	float start;
-
-
-	// generate abscissa tags
-	start = 0.0f;
-	while(start > pixels_to_descartes({0.0f, 0.0f}).x) {
-		start -= xinter;
-	}
-	while(start < pixels_to_descartes({width_, 0.0f}).x) {
-		tags_.abscissa.push_back(start);
-		start += xinter;
-	}
-
-
-	// generate ordinate tags
-	start = 0.0f;
-	while(start > pixels_to_descartes({0.0f, height_}).y) {
-		start -= yinter;
-	}
-	while(start < pixels_to_descartes({0.0f, 0.0f}).y) {
-		tags_.ordinate.push_back(start);
-		start += yinter;
-	}
-
-	// it's all
-	ischanged_ = true;
-
-	return *this;
-}
-
 
 
 
@@ -287,6 +232,7 @@ void ChartPrinter::adjust_()
 
 	// calc&draw
 	calculate_size_();
+	generate_tags_();
 	draw_();
 
 	// it's all
@@ -296,6 +242,25 @@ void ChartPrinter::adjust_()
 
 
 void ChartPrinter::calculate_size_()
+{
+	calculate_charts_characts_();
+	calculate_xkyk_();
+
+	// calculate axispoint
+	if(xl_ == 0.0f || yl_ == 0.0f) {
+		axispoint_.x = padding_;
+		axispoint_.y = height_ - padding_;
+	}
+	else {
+		axispoint_.x = -xmin_ / xl_ * (width_-2.0f*padding_) + padding_;
+		axispoint_.y = height_ -
+			(-ymin_ / yl_ * (height_-2.0f*padding_) + padding_);
+	}
+
+	return;
+}
+
+void ChartPrinter::calculate_charts_characts_()
 {
 	// null always appears
 	xmin_ = 0.0f;
@@ -371,25 +336,71 @@ void ChartPrinter::calculate_size_()
 			ymax = buf->second;
 	}
 
-
 	// calculate length
 	xl_ = xmax-xmin_;
 	yl_ = ymax-ymin_;
 
-	// calculate axispoint
-	if(xl_ == 0.0f || yl_ == 0.0f) {
-		axispoint_.x = padding_;
-		axispoint_.y = height_ - padding_;
-		xk_ = yk_ = 0.0f;
-	}
-	else {
-		xk_ = (width_-2.0f*padding_) / xl_;
-		yk_ = (height_-2.0f*padding_) / yl_;
+	return;
+}
 
-		axispoint_.x = -xmin_ / xl_ * (width_-2.0f*padding_) + padding_;
-		axispoint_.y = height_ -
-			(-ymin_ / yl_ * (height_-2.0f*padding_) + padding_);
+void ChartPrinter::calculate_xkyk_()
+{
+	if(xl_ == 0.0f || yl_ == 0.0f) {
+		xk_ = yk_ = 0.0f;
+		return;
 	}
+
+	xk_ = (width_-2.0f*padding_) / xl_;
+	yk_ = (height_-2.0f*padding_) / yl_;
+
+	if(tagset_.xyratio != 0.0f) {
+		if(tagset_.xyratio > 1.0f)
+			yk_ = xk_/tagset_.xyratio;
+		else
+			xk_ = yk_*tagset_.xyratio;
+	}
+
+	return;
+}
+
+// только генерирует теги, используя текущие
+// значения размеров.
+void ChartPrinter::generate_tags_()
+{
+	// clear old tags
+	tags_.abscissa.clear();
+	tags_.ordinate.clear();
+
+	
+	// preparation
+	if(xl_ == 0 || yl_ == 0 || tagset_.xinter == 0 || tagset_.yinter == 0)
+		return;
+
+	float start;
+
+
+	// generate abscissa tags
+	start = 0.0f;
+	while(start > pixelsToDescartes({0.0f, 0.0f}).x) {
+		start -= tagset_.xinter;
+	}
+	while(start < pixelsToDescartes({width_, 0.0f}).x) {
+		tags_.abscissa.push_back(start);
+		start += tagset_.xinter;
+	}
+
+
+	// generate ordinate tags
+	start = 0.0f;
+	while(start > pixelsToDescartes({0.0f, height_}).y) {
+		start -= tagset_.yinter;
+	}
+	while(start < pixelsToDescartes({0.0f, 0.0f}).y) {
+		tags_.ordinate.push_back(start);
+		start += tagset_.yinter;
+	}
+
+	// it's all
 
 	return;
 }
@@ -430,7 +441,7 @@ void ChartPrinter::draw_grid_()
 
 	// horizontal lines
 	for(auto b = tags_.ordinate.cbegin(), e = tags_.ordinate.cend(); b != e; ++b) {
-		buf = descartes_to_pixels({0.0f, *b});
+		buf = descartesToPixels({0.0f, *b});
 		line.setPosition(
 			{ 0.0f, buf.y },
 			{ width_, buf.y }
@@ -440,13 +451,14 @@ void ChartPrinter::draw_grid_()
 
 	// vertical lines
 	for(auto b = tags_.abscissa.cbegin(), e = tags_.abscissa.cend(); b != e; ++b) {
-		buf = descartes_to_pixels({*b, 0.0f});
+		buf = descartesToPixels({*b, 0.0f});
 		line.setPosition(
 			{ buf.x, 0.0f },
 			{ buf.x, height_ }
 		);
 		rtexture_.draw(line);
 	}
+
 
 	return;
 }
@@ -480,7 +492,7 @@ void ChartPrinter::draw_tags_()
 {
 	// create Rectangle
 	sf::RectangleShape rect;
-	rect.setFillColor(tagset_.color);
+	rect.setFillColor(tagset_.tcolor);
 
 
 	// for abscissa
@@ -489,7 +501,7 @@ void ChartPrinter::draw_tags_()
 
 	for(auto b = tags_.abscissa.cbegin(), e = tags_.abscissa.cend(); b != e; ++b) {
 		rect.setPosition(
-			descartes_to_pixels({*b, 0})
+			descartesToPixels({*b, 0})
 		);
 		rtexture_.draw(rect);
 	}
@@ -502,7 +514,7 @@ void ChartPrinter::draw_tags_()
 	for(auto b = tags_.ordinate.cbegin(), e = tags_.ordinate.cend(); b != e; ++b) {
 
 		rect.setPosition(
-			descartes_to_pixels({0, *b})
+			descartesToPixels({0, *b})
 		);
 		rtexture_.draw(rect);
 	}
@@ -512,7 +524,6 @@ void ChartPrinter::draw_tags_()
 
 void ChartPrinter::draw_charts_()
 {
-
 	clever::Line line;
 
 	for(auto const &i : charts_) {
@@ -526,10 +537,10 @@ void ChartPrinter::draw_charts_()
 		for(auto b = i.first->begin()+1, e = i.first->end(); b != e; ++b) {
 
 			line.setPosition(
-				descartes_to_pixels({
+				descartesToPixels({
 					std::prev(b)->first, std::prev(b)->second
 				}),
-				descartes_to_pixels({b->first, b->second})
+				descartesToPixels({b->first, b->second})
 			);
 
 			rtexture_.draw(line);
@@ -541,7 +552,7 @@ void ChartPrinter::draw_charts_()
 
 
 
-sf::Vector2f ChartPrinter::descartes_to_pixels(sf::Vector2f const &point) const
+sf::Vector2f ChartPrinter::descartesToPixels(sf::Vector2f const &point) const
 {
 	return sf::Vector2f {
 		point.x*xk_ + axispoint_.x,
@@ -549,7 +560,7 @@ sf::Vector2f ChartPrinter::descartes_to_pixels(sf::Vector2f const &point) const
 	};
 }
 
-sf::Vector2f ChartPrinter::pixels_to_descartes(sf::Vector2f const &point) const
+sf::Vector2f ChartPrinter::pixelsToDescartes(sf::Vector2f const &point) const
 {
 	return sf::Vector2f {
 		(point.x - axispoint_.x)/xk_,
@@ -559,5 +570,10 @@ sf::Vector2f ChartPrinter::pixels_to_descartes(sf::Vector2f const &point) const
 
 
 
+
+ChartPrinter &ChartPrinter::correctSize(float xy)
+{
+	return *this;
+}
 
 // end

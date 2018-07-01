@@ -31,7 +31,13 @@ struct TagSettings
 {
 	float length;
 	float thickness;
-	sf::Color color;
+
+	float xinter;
+	float yinter;
+	float xyratio;
+
+	sf::Color tcolor;
+	sf::Color lcolor;
 	sf::Text text;
 
 	static TagSettings const &getDefault();
@@ -121,25 +127,30 @@ public:
 	ChartPrinter &generateTagsByInterval(float xinter, float yinter);
 
 
-
 	// grid settings
 	ChartPrinter &setGridSettings(
 		GridSettings const &gridset
 	);
 	GridSettings const &getGridSettings() const;
 
+	ChartPrinter &correctSize(float xy);
 
 
 
+	// other
+	sf::Vector2f descartesToPixels(sf::Vector2f const &point) const;
+	sf::Vector2f pixelsToDescartes(sf::Vector2f const &point) const;
+	
 
-
-	sf::Vector2f pixels_to_descartes(sf::Vector2f const &point) const;
 
 private:
 	// service methods
 	void adjust_();
 
 	void calculate_size_();
+	void calculate_charts_characts_();
+	void calculate_xkyk_();
+	void generate_tags_();
 
 	void draw_();
 	void draw_grid_();
@@ -147,17 +158,20 @@ private:
 	void draw_tags_();
 	void draw_charts_();
 
-	sf::Vector2f descartes_to_pixels(sf::Vector2f const &point) const;
+
+	
 
 	// size on pixels
 	float width_ = 300.0f, height_ = 300.0f;
 	float padding_ = 0.0f;
 	sf::Vector2f axispoint_ = {0.0f, 0.0f};
 
+
 	// charts
 	std::vector<
 		std::pair<chartptr_type, ChartSettings>
 	> charts_;
+
 	//size on descartes
 	float xl_ = 0.0f, yl_ = 0.0f;
 	float xmin_ = 0.0f, ymin_ = 0.0f;
@@ -166,10 +180,12 @@ private:
 	// tags on descartes
 	Tags tags_;
 
+
 	// settings
 	AxisSettings axis_ = AxisSettings::getDefault();
 	TagSettings tagset_ = TagSettings::getDefault();
 	GridSettings gridset_ = GridSettings::getDefault();
+
 
 
 	// technical

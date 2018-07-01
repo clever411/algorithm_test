@@ -69,8 +69,24 @@ void init_chart()
 	chart.setSize(
 		conversion<float>(window.getSize())
 	);
-	chart.setPadding(100.0f);
-	chart.setAxisSettings(AxisSettings{Color::Blue, 10.0f});
+	chart.setPadding(50.0f);
+	chart.setAxisSettings(AxisSettings{Color::Blue, 5.0f});
+	{
+		TagSettings set = TagSettings::getDefault();
+		set.xinter = 50.0f;
+		set.yinter = 50.0f;
+		set.xyratio = 1.0f;
+		chart.setTagSettings(set);
+	}
+	chart.addChart(
+		generate_chart(
+			0.0f,  MAX_X, STEP, 
+			[](float x)->float {
+				return 100*std::sin(x/50.0f)+100;
+			}
+		),
+		{ Color::Black, 2.0f, 0.0f }
+	);
 	chart.addChart(
 		generate_chart(
 			0.0f, MAX_X, STEP, 
@@ -99,7 +115,6 @@ void init_chart()
 		{ Color::Black, 3.0f, 1.0f }
 	);
 
-	chart.generateTagsByInterval(10.0f, 10.0f);
 
 	return;
 }
@@ -132,7 +147,6 @@ void init_chart2(string filename)
 	);
 
 	chart.setSize(conversion<float>(window.getSize()));
-	chart.generateTagsByInterval(1.0f, 1.0f);
 
 
 	return;
@@ -153,7 +167,7 @@ int main( int argc, char *argv[] )
 		if(window.pollEvent(event)) {
 			if(event.type == Event::KeyPressed) {
 				if(event.key.code == Keyboard::I) {
-					cout << chart.pixels_to_descartes(
+					cout << chart.pixelsToDescartes(
 						conversion<float>(Mouse::getPosition(window))
 					) << endl;
 				}
