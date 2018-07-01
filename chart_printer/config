@@ -1,0 +1,46 @@
+padding = 200.0;
+backgroundcolor = "fae7b5";
+
+axis:
+{
+	color = "black";
+	thickness = 10.0;
+};
+
+tags:
+{
+	length = 30.0;
+	thickness = 5.0;
+	xinter = 1.0;
+	yinter = 1.0;
+	xyratio = 1.0;
+
+	tcolor = "black";
+	lcolor = "black";
+};
+
+grid:
+{
+	enable = true;
+	thickness = 3.0;
+	color = "black";
+};
+
+charts = 
+(
+	{
+		thickness = 7.0;
+		overlayprior = 0.0;
+		color = "ff0000";
+		data = [
+			0.0, 0.0,
+			1.0, 1.0, 
+			2.0, 1.0, 
+			2.5, 0.0, 
+			3.0, 2.0, 
+			4.0, 2.0, 
+			5.0, 0.0 
+		];
+	}
+);
+

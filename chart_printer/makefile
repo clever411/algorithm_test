@@ -1,12 +1,13 @@
 EXECUTABLE = main
 CFLAGS = -c -Wall -g3 -DDEBUG -I..
 LDFLAGS = -g3
-LIBS = -lsfml-graphics -lsfml-system -lsfml-window
+LIBS = -lsfml-graphics -lsfml-system -lsfml-window -lconfig++
 
 all: $(EXECUTABLE)
 
 run: all
 	$(EXECUTABLE) 
+
 rebuild: clean all
 
 rerun: clean run

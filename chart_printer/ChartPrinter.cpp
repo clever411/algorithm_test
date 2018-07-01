@@ -354,7 +354,7 @@ void ChartPrinter::calculate_xkyk_()
 	yk_ = (height_-2.0f*padding_) / yl_;
 
 	if(tagset_.xyratio != 0.0f) {
-		if(tagset_.xyratio > 1.0f)
+		if(tagset_.xyratio >= 1.0f)
 			yk_ = xk_/tagset_.xyratio;
 		else
 			xk_ = yk_*tagset_.xyratio;
