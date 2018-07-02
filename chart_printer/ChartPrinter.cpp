@@ -515,8 +515,8 @@ void ChartPrinter::draw_tags_()
 		tagset_.text.setPosition(
 			descartesToPixels({*b, 0}) +
 			sf::Vector2f{
-				-0.7f*tagset_.text.getGlobalBounds().width,
-				0.3f*tagset_.text.getGlobalBounds().height
+				-0.5f*tagset_.text.getGlobalBounds().width,
+				axis_.thickness + tagset_.length*0.5f
 			}
 		);
 		rtexture_.draw(tagset_.text);
@@ -542,8 +542,12 @@ void ChartPrinter::draw_tags_()
 		tagset_.text.setPosition(
 			descartesToPixels({0, *b}) +
 			sf::Vector2f{
-				-2.0f*tagset_.text.getLocalBounds().width,
-				-0.95f*tagset_.text.getLocalBounds().height
+				-(
+					1.0f*tagset_.text.getLocalBounds().width +
+					tagset_.length*0.5f +
+					axis_.thickness
+				),
+				-0.5f*tagset_.text.getLocalBounds().height
 			}
 		);
 		rtexture_.draw(tagset_.text);

@@ -11,14 +11,14 @@ tags:
 {
 	length = 30.0;
 	thickness = 5.0;
-	xinter = 2.0;
-	yinter = 2.0;
+	xinter = 4.0;
+	yinter = 4.0;
 	xyratio = 1.0;
 	tcolor = "black";
 
-	fontsize = 25;
-	lcolor = "black";
-	fontfilename = "chava.ttf";
+	fontsize = 30;
+	lcolor = "red";
+	fontfilename = "opel.ttf";
 };
 
 grid:
