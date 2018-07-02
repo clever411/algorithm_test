@@ -11,35 +11,37 @@ tags:
 {
 	length = 30.0;
 	thickness = 5.0;
-	xinter = 1.0;
-	yinter = 1.0;
+	xinter = 2.0;
+	yinter = 2.0;
 	xyratio = 1.0;
-
 	tcolor = "black";
+
+	fontsize = 25;
 	lcolor = "black";
+	fontfilename = "chava.ttf";
 };
 
 grid:
 {
 	enable = true;
-	thickness = 3.0;
-	color = "black";
+	thickness = 1.0;
+	color = "555555";
 };
 
 charts = 
 (
 	{
-		thickness = 7.0;
+		thickness = 3.0;
 		overlayprior = 0.0;
-		color = "ff0000";
+		color = "black";
 		data = [
 			0.0, 0.0,
-			1.0, 1.0, 
-			2.0, 1.0, 
-			2.5, 0.0, 
-			3.0, 2.0, 
-			4.0, 2.0, 
-			5.0, 0.0 
+			8.0, 8.0, 
+			16.0, 8.0, 
+			20.0, 0.0, 
+			24.0, 16.0, 
+			32.0, 16.0, 
+			40.0, 0.0 
 		];
 	}
 );

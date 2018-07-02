@@ -2,6 +2,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
+#include <string>
+
 #include <clever/SFML/HelpFunctions.hpp>
 
 #ifdef DEBUG
@@ -35,7 +38,7 @@ TagSettings const &TagSettings::getDefault()
 {
 	static TagSettings const singelton {
 		20.0f, 3.0f, 10.0f, 10.0f, 1.0f,
-		sf::Color::Black, sf::Color::Black
+		sf::Color::Black
 	};
 	return singelton;
 }
@@ -363,8 +366,6 @@ void ChartPrinter::calculate_xkyk_()
 	return;
 }
 
-// только генерирует теги, используя текущие
-// значения размеров.
 void ChartPrinter::generate_tags_()
 {
 	// clear old tags
@@ -411,7 +412,6 @@ void ChartPrinter::draw_()
 	// preparation render texture
 	rtexture_.create(width_, height_);
 	rtexture_.clear(sf::Color::Transparent);
-
 
 	// draw
 	if(gridset_.enable)
@@ -499,11 +499,27 @@ void ChartPrinter::draw_tags_()
 	rect.setSize({tagset_.thickness, tagset_.length});
 	rect.setOrigin(rect.getSize()/2.0f);
 
+	char buf[16];
 	for(auto b = tags_.abscissa.cbegin(), e = tags_.abscissa.cend(); b != e; ++b) {
+		// tag
 		rect.setPosition(
 			descartesToPixels({*b, 0})
 		);
 		rtexture_.draw(rect);
+
+		// label
+		if(*b == 0)
+			continue;
+		std::snprintf(buf, 16u, "%.4g", *b);
+		tagset_.text.setString(buf);
+		tagset_.text.setPosition(
+			descartesToPixels({*b, 0}) +
+			sf::Vector2f{
+				-0.7f*tagset_.text.getGlobalBounds().width,
+				0.3f*tagset_.text.getGlobalBounds().height
+			}
+		);
+		rtexture_.draw(tagset_.text);
 	}
 
 
@@ -512,11 +528,25 @@ void ChartPrinter::draw_tags_()
 	rect.setOrigin(rect.getSize()/2.0f);
 
 	for(auto b = tags_.ordinate.cbegin(), e = tags_.ordinate.cend(); b != e; ++b) {
-
+		// tag
 		rect.setPosition(
 			descartesToPixels({0, *b})
 		);
 		rtexture_.draw(rect);
+
+		// label
+		if(*b == 0.0f)
+			continue;
+		std::snprintf(buf, 16u, "%.4g", *b);
+		tagset_.text.setString(buf);
+		tagset_.text.setPosition(
+			descartesToPixels({0, *b}) +
+			sf::Vector2f{
+				-2.0f*tagset_.text.getLocalBounds().width,
+				-0.95f*tagset_.text.getLocalBounds().height
+			}
+		);
+		rtexture_.draw(tagset_.text);
 	}
 
 	return;

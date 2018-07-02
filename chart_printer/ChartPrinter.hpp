@@ -37,7 +37,6 @@ struct TagSettings
 	float xyratio;
 
 	sf::Color tcolor;
-	sf::Color lcolor;
 	sf::Text text;
 
 	static TagSettings const &getDefault();

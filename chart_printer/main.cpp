@@ -32,6 +32,7 @@ typedef std::vector< std::pair<float, float> > chart_type;
 typedef std::shared_ptr<chart_type> chartptr_type;
 
 ChartPrinter chart;
+Font font;
 
 
 Config config;
@@ -45,7 +46,7 @@ string const CONFIG_FILE_NAME = "config";
 void init_window()
 {
 	ContextSettings sets;
-	sets.antialiasingLevel = 8;
+	//sets.antialiasingLevel = 8;
 	window.create(dsmode, TITLE, Style::None, sets);
 	window.setPosition({0, 0});
 	window.setVerticalSyncEnabled(true);
@@ -168,6 +169,7 @@ void init_chart()
 	Setting const &root = config.getRoot();
 	
 	float fbuf;
+	unsigned int uibuf;
 	string sbuf;
 
 	// padding and color
@@ -195,16 +197,26 @@ void init_chart()
 	{
 		TagSettings sets;
 
+		// tags settings
 		lookup(root, "tags.length", sets.length, 30.0f);
 		lookup(root, "tags.thickness", sets.thickness, 3.0f);
 		lookup(root, "tags.xinter", sets.xinter, 10.0f);
 		lookup(root, "tags.yinter", sets.yinter, 10.0f);
 		lookup(root, "tags.xyratio", sets.xyratio, 1.0f);
-
 		lookup(root, "tags.tcolor", sbuf, string("black"));
 		sets.tcolor = read_color(sbuf);
-		lookup(root, "tags.lcolor", sbuf, string("black"));
-		sets.lcolor = read_color(sbuf);
+
+		// text for label settings
+		lookup(root, "tags.fontfilename", sbuf, string("font.ttf"));
+		if(font.loadFromFile(sbuf)) {
+			sets.text.setFont(font);
+			lookup(root, "tags.fontsize", uibuf, 30u);
+			sets.text.setCharacterSize(uibuf);
+			lookup(root, "tags.lcolor", sbuf, string("black"));
+			sets.text.setFillColor(read_color(sbuf));
+		}
+
+
 
 		chart.setTagSettings(sets);
 	}
