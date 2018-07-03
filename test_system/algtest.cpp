@@ -100,8 +100,6 @@ int something(Data const &data)
 
 int main( int argc, char *argv[] )
 {
-	cout << DEFAULT_OUTPUT_FILE_NAME << endl;
-
 	char const *outfilename;
 	if(argc < 2) {
 		outfilename = DEFAULT_OUTPUT_FILE_NAME;
@@ -115,3 +113,9 @@ int main( int argc, char *argv[] )
 
 	return 0;
 }
+
+
+
+
+
+// end
