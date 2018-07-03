@@ -363,18 +363,37 @@ void ChartPrinter::calculate_xkyk_()
 	}
 		
 	// smart calculate
+	float w = width_-2*padding_;
+	float h = height_-2*padding_;
 	if(tagset_.xinter < 0.0f || tagset_.yinter < 0.0f) {
 		// rough calculate interval
-		tagset_.xinter = xl_ * tagset_.pxinter / (width_-2*padding_);
-		tagset_.yinter = yl_ * tagset_.pyinter / (height_-2*padding_);
+		tagset_.xinter = xl_ * tagset_.pxinter / w;
+		tagset_.yinter = yl_ * tagset_.pyinter / h;
 
 		// unrough
-		tagset_.xinter = float((int)tagset_.xinter);
-		tagset_.yinter = float((int)tagset_.yinter);
+		// ...
 
 		// xk, yk calculate
 		xk_ = tagset_.pxinter / tagset_.xinter;
 		yk_ = tagset_.pyinter / tagset_.yinter;
+
+		if(xl_*xk_ > w) {
+			yk_ *= (w/xl_) / xk_;
+			xk_ = w/xl_;
+		}
+		if(yl_*yk_ > h) {
+			xk_ *= (h/yl_) / yk_;
+			yk_ = h/yl_;
+		}
+			
+
+		while(
+			xl_*xk_ > width_-2*padding_ ||
+			yl_*yk_ > height_-2*padding_
+		) {
+			xk_ *= 0.99;
+			yk_ *= 0.99;
+		}
 	}
 	// accurate calculate
 	else {
@@ -382,8 +401,6 @@ void ChartPrinter::calculate_xkyk_()
 		yk_ = (height_-2.0f*padding_) / yl_;
 
 		if(tagset_.xyratio != 0.0f) {
-			std::cout << "yk: " << yk_ << std::endl;
-			std::cout << "val: " << xk_/tagset_.xyratio << std::endl;
 			if(yk_ > xk_/tagset_.xyratio) {
 				yk_ = xk_/tagset_.xyratio;
 			}
@@ -404,8 +421,9 @@ void ChartPrinter::generate_tags_()
 
 	
 	// preparation
-	if(xl_ == 0 || yl_ == 0 || tagset_.xinter == 0 || tagset_.yinter == 0)
+	if(xl_ == 0 || yl_ == 0 || tagset_.xinter == 0 || tagset_.yinter == 0) {
 		return;
+	}
 
 	float start;
 
@@ -530,10 +548,10 @@ void ChartPrinter::draw_tags_()
 		tagset_.xlabelfreq = 1u;
 	if(tagset_.ylabelfreq == 0u)
 		tagset_.ylabelfreq = 1u;
-	auto zero = std::find_if(
+	auto zero = std::min_element(
 		tags_.abscissa.cbegin(), tags_.abscissa.cend(), 
-		[](float point)->bool {
-			return point == 0.0f;
+		[](float lhs, float rhs)->bool {
+			return std::fabs(lhs) < std::fabs(rhs);
 		}
 	);
 	if(zero == tags_.abscissa.cend())
@@ -543,7 +561,7 @@ void ChartPrinter::draw_tags_()
 	int dis = zero-tags_.abscissa.cbegin();
 	n = dis % tagset_.xlabelfreq;
 
-	char buf[16];
+	char buf[24];
 	for(auto b = tags_.abscissa.cbegin(), e = tags_.abscissa.cend(); b != e; ++b) {
 		// tag
 		rect.setPosition(
@@ -552,7 +570,7 @@ void ChartPrinter::draw_tags_()
 		rtexture_.draw(rect);
 
 		// label
-		if(*b == 0.0f) {
+		if(b == zero) {
 			n = tagset_.xlabelfreq-1;
 			continue;
 		}
@@ -561,7 +579,7 @@ void ChartPrinter::draw_tags_()
 			continue;
 		}
 
-		std::snprintf(buf, 16u, "%.8g", *b);
+		std::snprintf(buf, 24u, "%.4g", *b);
 		tagset_.text.setString(buf);
 		tagset_.text.setPosition(
 			descartesToPixels({*b, 0}) +
@@ -579,10 +597,10 @@ void ChartPrinter::draw_tags_()
 	rect.setSize({tagset_.length, tagset_.thickness});
 	rect.setOrigin(rect.getSize()/2.0f);
 
-	zero = std::find_if(
+	zero = std::min_element(
 		tags_.ordinate.cbegin(), tags_.ordinate.cend(),
-		[](float point)->bool {
-			return point == 0.0f;
+		[](float lhs, float rhs)->bool {
+			return std::fabs(lhs) < std::fabs(rhs);
 		}
 	);
 	if(zero == tags_.ordinate.cend())
@@ -598,7 +616,7 @@ void ChartPrinter::draw_tags_()
 		rtexture_.draw(rect);
 
 		// label
-		if(*b == 0.0f) {
+		if(b == zero) {
 			n = tagset_.ylabelfreq-1;
 			continue;
 		}
@@ -606,7 +624,7 @@ void ChartPrinter::draw_tags_()
 			--n;
 			continue;
 		}
-		std::snprintf(buf, 16u, "%.8g", *b);
+		std::snprintf(buf, 24u, "%.4g", *b);
 		tagset_.text.setString(buf);
 		tagset_.text.setPosition(
 			descartesToPixels({0, *b}) +

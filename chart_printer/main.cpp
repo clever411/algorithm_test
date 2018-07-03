@@ -341,7 +341,13 @@ int main( int argc, char *argv[] )
 			}
 		}
 		// update
-		chart.update();
+		try {
+			chart.update();
+		}
+		catch(char const *e) {
+			cerr << "error: " << e << endl;
+			return 0;
+		}
 
 		// draw
 		window.clear(backgroundcolor);

@@ -15,7 +15,7 @@ char const *DEFAULT_OUTPUT_FILE_NAME = "chart.txt";
 
 float foo(float x)
 {
-	return x/1920.0f*1080.0f;
+	return 2*sin(x/2);
 }
 
 
@@ -26,7 +26,7 @@ float foo(float x)
 int main( int argc, char *argv[] )
 {
 	constexpr static float const
-		BEGIN = 0.0f, END = 1920.0f, STEP = 1.0f
+		BEGIN = 0.0f, END = 20.0f, STEP = 0.1f
 	;
 
 	char const *outfilename;
@@ -41,7 +41,7 @@ int main( int argc, char *argv[] )
 	Setting &data = root.add( "data", Setting::TypeArray );
 
 	Setting *el = nullptr;
-	for(float b = BEGIN, e = END; b < e; b += STEP) {
+	for(float b = BEGIN, e = END; b <= e; b += STEP) {
 		el = &data.add(Setting::TypeFloat);
 		*el = b;
 		el = &data.add(Setting::TypeFloat);
