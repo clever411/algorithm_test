@@ -200,11 +200,14 @@ void init_chart()
 		// tags settings
 		lookup(root, "tags.length", sets.length, 30.0f);
 		lookup(root, "tags.thickness", sets.thickness, 3.0f);
-		lookup(root, "tags.xinter", sets.xinter, 10.0f);
-		lookup(root, "tags.yinter", sets.yinter, 10.0f);
-		lookup(root, "tags.xyratio", sets.xyratio, 1.0f);
+		lookup(root, "tags.xinter", sets.xinter, -1.0f);
+		lookup(root, "tags.yinter", sets.yinter, -1.0f);
+		lookup(root, "tags.xyratio", sets.xyratio, 0.0f);
 		lookup(root, "tags.tcolor", sbuf, string("black"));
 		sets.tcolor = read_color(sbuf);
+
+		lookup(root, "tags.pxinter", sets.pxinter, 50.0f);
+		lookup(root, "tags.pyinter", sets.pyinter, 50.0f);
 
 		// text for label settings
 		lookup(root, "tags.fontfilename", sbuf, string("font.ttf"));

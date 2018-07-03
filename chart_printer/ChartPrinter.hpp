@@ -37,6 +37,9 @@ struct TagSettings
 	float xyratio;
 	sf::Color tcolor;
 
+	float pxinter;
+	float pyinter;
+
 	unsigned int xlabelfreq;
 	unsigned int ylabelfreq;
 	sf::Text text;
@@ -150,6 +153,7 @@ private:
 
 	void calculate_size_();
 	void calculate_charts_characts_();
+	void calculate_smart_size_();
 	void calculate_xkyk_();
 	void generate_tags_();
 

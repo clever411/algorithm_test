@@ -37,9 +37,11 @@ AxisSettings const &AxisSettings::getDefault()
 TagSettings const &TagSettings::getDefault()
 {
 	static TagSettings const singelton {
-		20.0f, 3.0f, 10.0f, 10.0f, 1.0f,
-		sf::Color::Black,
-		1, 1
+		20.0f, 3.0f, // size
+		10.0f, 10.0f, 1.0f, // intervals, ratio
+		sf::Color::Black, // tag color
+		50.0f, 50.0f, // intervals in pixels
+		1, 1 // label frequence
 	};
 	return singelton;
 }
@@ -256,9 +258,8 @@ void ChartPrinter::calculate_size_()
 		axispoint_.y = height_ - padding_;
 	}
 	else {
-		axispoint_.x = -xmin_ / xl_ * (width_-2.0f*padding_) + padding_;
-		axispoint_.y = height_ -
-			(-ymin_ / yl_ * (height_-2.0f*padding_) + padding_);
+		axispoint_.x = -xmin_ * xk_ + padding_;
+		axispoint_.y = height_ - (-ymin_ * yk_ + padding_);
 	}
 
 	return;
@@ -349,19 +350,47 @@ void ChartPrinter::calculate_charts_characts_()
 
 void ChartPrinter::calculate_xkyk_()
 {
-	if(xl_ == 0.0f || yl_ == 0.0f) {
-		xk_ = yk_ = 0.0f;
+	if(
+		xl_ == 0.0f || yl_ == 0.0f ||
+		width_ == 0.0f || height_ == 0.0f
+	) {
+		tagset_.xinter = 0.0f;
+		tagset_.yinter = 0.0f;
+		xk_ = 0.0f;
+		yk_ = 0.0f;
+
 		return;
 	}
+		
+	// smart calculate
+	if(tagset_.xinter < 0.0f || tagset_.yinter < 0.0f) {
+		// rough calculate interval
+		tagset_.xinter = xl_ * tagset_.pxinter / (width_-2*padding_);
+		tagset_.yinter = yl_ * tagset_.pyinter / (height_-2*padding_);
 
-	xk_ = (width_-2.0f*padding_) / xl_;
-	yk_ = (height_-2.0f*padding_) / yl_;
+		// unrough
+		tagset_.xinter = float((int)tagset_.xinter);
+		tagset_.yinter = float((int)tagset_.yinter);
 
-	if(tagset_.xyratio != 0.0f) {
-		if(tagset_.xyratio >= 1.0f)
-			yk_ = xk_/tagset_.xyratio;
-		else
-			xk_ = yk_*tagset_.xyratio;
+		// xk, yk calculate
+		xk_ = tagset_.pxinter / tagset_.xinter;
+		yk_ = tagset_.pyinter / tagset_.yinter;
+	}
+	// accurate calculate
+	else {
+		xk_ = (width_-2.0f*padding_) / xl_;
+		yk_ = (height_-2.0f*padding_) / yl_;
+
+		if(tagset_.xyratio != 0.0f) {
+			std::cout << "yk: " << yk_ << std::endl;
+			std::cout << "val: " << xk_/tagset_.xyratio << std::endl;
+			if(yk_ > xk_/tagset_.xyratio) {
+				yk_ = xk_/tagset_.xyratio;
+			}
+			else {
+				xk_ = yk_*tagset_.xyratio;
+			}
+		}
 	}
 
 	return;
