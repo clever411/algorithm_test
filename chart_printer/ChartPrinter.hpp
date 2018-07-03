@@ -8,6 +8,7 @@
 
 
 
+// settings structures
 struct ChartSettings
 {
 	sf::Color color;
@@ -40,9 +41,10 @@ struct TagSettings
 	float pxinter;
 	float pyinter;
 
-	unsigned int xlabelfreq;
-	unsigned int ylabelfreq;
+	int xlabelfreq;
+	int ylabelfreq;
 	sf::Text text;
+	int fontsize;
 
 	static TagSettings const &getDefault();
 };
@@ -65,13 +67,32 @@ struct GridSettings
 };
 
 
+struct AimSettings
+{
+	float thickness;
+	sf::Color color;
+
+	static AimSettings const &getDefault();
+};
+
+
+struct TableSettings
+{
+	sf::Vector2f padding;
+	sf::Text text;
+
+	static TableSettings const &getDefault();
+};
 
 
 
+
+
+// chart printer
 class ChartPrinter: public sf::Drawable, public sf::Transformable
 {
 public:
-	// typedef
+	// types
 	typedef float value_type;
 	typedef std::vector<
 		std::pair<value_type, value_type>
@@ -88,12 +109,24 @@ public:
 		sf::RenderStates states = sf::RenderStates::Default
 	) const override;
 
+	void drawAim(
+		sf::Vector2f const &pixpoint,
+		sf::RenderTarget &target,
+		sf::RenderStates states = sf::RenderStates::Default
+	) const;
+
+	void drawTable(
+		sf::Vector2f pixpoint,
+		sf::RenderTarget &target,
+		sf::RenderStates states = sf::RenderStates::Default
+	) const;
+
 
 
 
 	// size
 	ChartPrinter &setSize(float width, float height);
-	ChartPrinter &setSize(sf::Vector2f size);
+	ChartPrinter &setSize(sf::Vector2f const &size);
 	sf::Vector2f getSize() const;
 
 
@@ -140,6 +173,20 @@ public:
 	ChartPrinter &correctSize(float xy);
 
 
+	// cross settings
+	ChartPrinter &setAimSettings(
+		AimSettings const &crset
+	);
+	AimSettings const &getAimSettings() const;
+
+
+	// table settings
+	ChartPrinter &setTableSettings(
+		TableSettings const &crset
+	);
+	TableSettings const &getTableSettings() const;
+
+
 
 	// other
 	sf::Vector2f descartesToPixels(sf::Vector2f const &point) const;
@@ -151,10 +198,11 @@ private:
 	// service methods
 	void adjust_();
 
-	void calculate_size_();
 	void calculate_charts_characts_();
 	void calculate_smart_size_();
 	void calculate_xkyk_();
+	void calculate_font_size_and_frequency_();
+	void calculate_axis_point_();
 	void generate_tags_();
 
 	void draw_();
@@ -190,6 +238,8 @@ private:
 	AxisSettings axis_ = AxisSettings::getDefault();
 	TagSettings tagset_ = TagSettings::getDefault();
 	GridSettings gridset_ = GridSettings::getDefault();
+	AimSettings crset_ = AimSettings::getDefault();
+	mutable TableSettings tabset_ = TableSettings::getDefault();
 
 
 
@@ -198,6 +248,8 @@ private:
 
 	sf::RenderTexture rtexture_;
 	sf::Sprite sprite_;
+
+
 
 };
 

@@ -24,6 +24,7 @@ using namespace std;
 RenderWindow window;
 VideoMode const dsmode = VideoMode::getDesktopMode();
 string const TITLE = "Chart Printer";
+unsigned int const FRAMERATE_LIMIT = 60u;
 Color backgroundcolor;
 Event event;
 
@@ -49,7 +50,7 @@ void init_window()
 	//sets.antialiasingLevel = 8;
 	window.create(dsmode, TITLE, Style::None, sets);
 	window.setPosition({0, 0});
-	window.setVerticalSyncEnabled(true);
+	window.setFramerateLimit(FRAMERATE_LIMIT);
 	return;
 }
 
@@ -172,6 +173,12 @@ void init_chart()
 	unsigned int uibuf;
 	string sbuf;
 
+
+
+	// font
+	lookup(root, "fontfilename", sbuf, string("font.ttf"));
+	font.loadFromFile(sbuf);
+
 	// padding and color
 	{
 		lookup(root, "padding", fbuf, 100.0f);
@@ -199,7 +206,7 @@ void init_chart()
 
 		// tags settings
 		lookup(root, "tags.length", sets.length, 30.0f);
-		lookup(root, "tags.thickness", sets.thickness, 3.0f);
+		lookup(root, "tags.thickness", sets.thickness, 5.0f);
 		lookup(root, "tags.xinter", sets.xinter, -1.0f);
 		lookup(root, "tags.yinter", sets.yinter, -1.0f);
 		lookup(root, "tags.xyratio", sets.xyratio, 0.0f);
@@ -210,16 +217,12 @@ void init_chart()
 		lookup(root, "tags.pyinter", sets.pyinter, 50.0f);
 
 		// text for label settings
-		lookup(root, "tags.fontfilename", sbuf, string("font.ttf"));
-		if(font.loadFromFile(sbuf)) {
-			sets.text.setFont(font);
-			lookup(root, "tags.fontsize", uibuf, 30u);
-			sets.text.setCharacterSize(uibuf);
-			lookup(root, "tags.lcolor", sbuf, string("black"));
-			sets.text.setFillColor(read_color(sbuf));
-			lookup(root, "tags.xlabelfreq", sets.xlabelfreq, 1u);
-			lookup(root, "tags.ylabelfreq", sets.ylabelfreq, 1u);
-		}
+		sets.text.setFont(font);
+		lookup(root, "tags.fontsize", sets.fontsize, -1);
+		lookup(root, "tags.lcolor", sbuf, string("black"));
+		sets.text.setFillColor(read_color(sbuf));
+		lookup(root, "tags.xlabelfreq", sets.xlabelfreq, -1);
+		lookup(root, "tags.ylabelfreq", sets.ylabelfreq, -1);
 
 
 
@@ -292,6 +295,32 @@ void init_chart()
 
 	}
 
+	// aim
+	{
+		AimSettings sets;
+
+		lookup(root, "aim.thickness", sets.thickness, 1.0f);
+		lookup(root, "aim.color", sbuf, string("black"));
+		sets.color = read_color(sbuf);
+
+		chart.setAimSettings(sets);
+	}
+
+	// table
+	{
+		TableSettings sets;
+
+		sets.text.setFont(font);
+		lookup(root, "table.xpadding", sets.padding.x, 50.0f);
+		lookup(root, "table.ypadding", sets.padding.y, 50.0f);
+		lookup(root, "table.fontsize", uibuf, 20u);
+		sets.text.setCharacterSize(uibuf);
+		lookup(root, "table.color", sbuf, string("black"));
+		sets.text.setFillColor(read_color(sbuf));
+
+		chart.setTableSettings(sets);
+	}
+
 
 }
 
@@ -323,6 +352,9 @@ int main( int argc, char *argv[] )
 	
 
 	// main loop
+
+	bool drawcross = false;
+	bool drawtable = false;
 	while(window.isOpen()) {
 		if(window.pollEvent(event)) {
 			if(event.type == Event::KeyPressed) {
@@ -335,23 +367,32 @@ int main( int argc, char *argv[] )
 				case Keyboard::C: case Keyboard::Escape:
 					window.close();
 					break;
+				case Keyboard::A:
+					drawcross = !drawcross;
+					break;
+				case Keyboard::T:
+					drawtable = !drawtable;
 				default:
 					break;
 				}
 			}
 		}
 		// update
-		try {
-			chart.update();
-		}
-		catch(char const *e) {
-			cerr << "error: " << e << endl;
-			return 0;
-		}
+		chart.update();
 
 		// draw
 		window.clear(backgroundcolor);
+		if(drawcross)
+			chart.drawAim(
+				clever::conversion<float>(Mouse::getPosition(window)),
+				window
+			);
 		window.draw(chart);
+		if(drawtable)
+			chart.drawTable(
+				clever::conversion<float>(Mouse::getPosition(window)),
+				window
+			);
 		window.display();
 	}
 

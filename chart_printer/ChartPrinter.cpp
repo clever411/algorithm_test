@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <cstring>
 #include <string>
 
 #include <clever/SFML/HelpFunctions.hpp>
@@ -20,38 +21,54 @@
 // structures
 ChartSettings const &ChartSettings::getDefault()
 {
-	static ChartSettings const singelton {
+	static ChartSettings const singleton {
 		sf::Color::Black, 2.0f, 0.0f
 	};
-	return singelton;
+	return singleton;
 }
 
 AxisSettings const &AxisSettings::getDefault()
 {
-	static AxisSettings const singelton {
+	static AxisSettings const singleton {
 		sf::Color::Black, 5.0f
 	};
-	return singelton;
+	return singleton;
 }
 
 TagSettings const &TagSettings::getDefault()
 {
-	static TagSettings const singelton {
+	static TagSettings const singleton {
 		20.0f, 3.0f, // size
 		10.0f, 10.0f, 1.0f, // intervals, ratio
 		sf::Color::Black, // tag color
 		50.0f, 50.0f, // intervals in pixels
 		1, 1 // label frequence
 	};
-	return singelton;
+	return singleton;
 }
 
 GridSettings const &GridSettings::getDefault()
 {
-	static GridSettings const singelton {
+	static GridSettings const singleton {
 		true, 1.0f, sf::Color::Black
 	};
-	return singelton;
+	return singleton;
+}
+
+AimSettings const &AimSettings::getDefault()
+{
+	static AimSettings const singleton {
+		1.0f, sf::Color::Red
+	};
+	return singleton;
+}
+
+TableSettings const &TableSettings::getDefault()
+{
+	static TableSettings const singleton {
+		{30.0f, 30.0f}
+	};
+	return singleton;
 }
 
 
@@ -76,6 +93,56 @@ void ChartPrinter::draw(
 	return;
 }
 
+void ChartPrinter::drawAim(
+	sf::Vector2f const &pixpoint,
+	sf::RenderTarget &target,
+	sf::RenderStates states
+) const
+{
+	states.transform *= sf::Transformable::getTransform();
+
+	clever::Line line;
+	line.setColor(crset_.color);
+	line.setThickness(crset_.thickness);
+
+	// horizontal
+	line.setPosition(
+		{0.0f, pixpoint.y},
+		{width_, pixpoint.y}
+	);
+	target.draw(line, states);
+
+	// vertical
+	line.setPosition(
+		{pixpoint.x, 0.0f},
+		{pixpoint.x, height_}
+	);
+	target.draw(line, states);
+
+	return;
+}
+
+void ChartPrinter::drawTable(
+	sf::Vector2f pixpoint,
+	sf::RenderTarget &target,
+	sf::RenderStates states
+) const
+{
+	states.transform *= sf::Transformable::getTransform();
+	char buf[32];
+	pixpoint = pixelsToDescartes(pixpoint);
+	std::snprintf(buf, sizeof buf, "%6.2g, %6.2g", pixpoint.x, pixpoint.y);
+	tabset_.text.setString(buf);
+	tabset_.text.setPosition({
+		width_ - ( tabset_.text.getLocalBounds().width + tabset_.padding.x ),
+		height_ - ( tabset_.text.getLocalBounds().height + tabset_.padding.y )
+	});
+	target.draw(tabset_.text, states);
+	return;
+}
+
+
+
 
 
 // size
@@ -88,7 +155,7 @@ ChartPrinter &ChartPrinter::setSize(float width, float height)
 	ischanged_ = true;
 	return *this;
 }
-ChartPrinter &ChartPrinter::setSize(sf::Vector2f size)
+ChartPrinter &ChartPrinter::setSize(sf::Vector2f const &size)
 {
 	if(width_ == size.x && height_ == size.y)
 		return *this;
@@ -102,6 +169,7 @@ sf::Vector2f ChartPrinter::getSize() const
 {
 	return {width_, height_};
 }
+
 
 
 // padding
@@ -154,8 +222,6 @@ ChartPrinter &ChartPrinter::clearCharts()
 
 
 
-
-
 // axis settings
 ChartPrinter &ChartPrinter::setAxisSettings(
 	AxisSettings const &newaxis
@@ -177,7 +243,6 @@ AxisSettings const &ChartPrinter::getAxisSettings() const
 
 
 
-
 // tag settings
 ChartPrinter &ChartPrinter::setTagSettings(
 	TagSettings const &newtagset
@@ -192,7 +257,6 @@ TagSettings const &ChartPrinter::getTagSettings() const
 {
 	return tagset_;
 }
-
 
 
 
@@ -211,6 +275,34 @@ GridSettings const &ChartPrinter::getGridSettings() const
 }
 
 
+
+// cross settings
+ChartPrinter &ChartPrinter::setAimSettings(
+	AimSettings const &crset
+)
+{
+	crset_ = crset;
+	return *this;
+}
+AimSettings const &ChartPrinter::getAimSettings() const
+{
+	return crset_;
+}
+
+
+
+// table settings
+ChartPrinter &ChartPrinter::setTableSettings(
+	TableSettings const &tabset
+)
+{
+	tabset_ = tabset;
+	return *this;
+}
+TableSettings const &ChartPrinter::getTableSettings() const
+{
+	return tabset_;
+}
 
 
 
@@ -236,10 +328,16 @@ void ChartPrinter::adjust_()
 		}
 	);
 
+
 	// calc&draw
-	calculate_size_();
+	calculate_charts_characts_();
+	calculate_xkyk_();
+	calculate_font_size_and_frequency_();
+	calculate_axis_point_();
 	generate_tags_();
+
 	draw_();
+
 
 	// it's all
 	ischanged_ = false;
@@ -247,23 +345,6 @@ void ChartPrinter::adjust_()
 }
 
 
-void ChartPrinter::calculate_size_()
-{
-	calculate_charts_characts_();
-	calculate_xkyk_();
-
-	// calculate axispoint
-	if(xl_ == 0.0f || yl_ == 0.0f) {
-		axispoint_.x = padding_;
-		axispoint_.y = height_ - padding_;
-	}
-	else {
-		axispoint_.x = -xmin_ * xk_ + padding_;
-		axispoint_.y = height_ - (-ymin_ * yk_ + padding_);
-	}
-
-	return;
-}
 
 void ChartPrinter::calculate_charts_characts_()
 {
@@ -351,8 +432,8 @@ void ChartPrinter::calculate_charts_characts_()
 void ChartPrinter::calculate_xkyk_()
 {
 	if(
-		xl_ == 0.0f || yl_ == 0.0f ||
-		width_ == 0.0f || height_ == 0.0f
+		xl_ <= 0.0f || yl_ <= 0.0f ||
+		width_ <= 0.0f || height_ <= 0.0f
 	) {
 		tagset_.xinter = 0.0f;
 		tagset_.yinter = 0.0f;
@@ -365,7 +446,7 @@ void ChartPrinter::calculate_xkyk_()
 	// smart calculate
 	float w = width_-2*padding_;
 	float h = height_-2*padding_;
-	if(tagset_.xinter < 0.0f || tagset_.yinter < 0.0f) {
+	if(tagset_.xinter <= 0.0f || tagset_.yinter <= 0.0f) {
 		// rough calculate interval
 		tagset_.xinter = xl_ * tagset_.pxinter / w;
 		tagset_.yinter = yl_ * tagset_.pyinter / h;
@@ -387,13 +468,6 @@ void ChartPrinter::calculate_xkyk_()
 		}
 			
 
-		while(
-			xl_*xk_ > width_-2*padding_ ||
-			yl_*yk_ > height_-2*padding_
-		) {
-			xk_ *= 0.99;
-			yk_ *= 0.99;
-		}
 	}
 	// accurate calculate
 	else {
@@ -413,6 +487,86 @@ void ChartPrinter::calculate_xkyk_()
 	return;
 }
 
+void ChartPrinter::calculate_font_size_and_frequency_()
+{
+	// accurate font size
+	if(tagset_.fontsize > 0) {
+		tagset_.text.setCharacterSize( tagset_.fontsize );
+		return;
+	}
+
+
+	// look for maximum size string
+	{
+		char max[32];
+		int maxlength = 0;
+		char buf[32];
+		int buflength = 0;
+		
+		std::vector<float> longnum;
+		longnum.push_back(xmin_);
+		longnum.push_back(xmin_+xl_);
+		longnum.push_back(tagset_.xinter);
+
+		for(auto b = longnum.cbegin(), e = longnum.cend(); b != e; ++b) {
+			buflength = std::snprintf(buf, (sizeof buf)-1, "%.3g", *b);
+			if(buflength > maxlength) {
+				std::memcpy(max, buf, buflength+1);
+				maxlength = buflength;
+			}
+		}
+		tagset_.text.setString(max);
+	}
+
+
+	// prepration
+	tagset_.fontsize = 40;
+	tagset_.text.setCharacterSize(tagset_.fontsize);
+	float dis = tagset_.xinter * xk_;
+	bool canreducefreq = tagset_.xlabelfreq <= 0;
+	if(canreducefreq) {
+		tagset_.xlabelfreq = 1;
+	}
+
+	// selection 
+	while(
+		(
+			2.0f *
+			(float)tagset_.text.getLocalBounds().width /
+			(float)tagset_.xlabelfreq
+		) > dis
+	) {
+		if(tagset_.fontsize <= 20 && canreducefreq) {
+			if(tagset_.xlabelfreq == 1) {
+				++tagset_.xlabelfreq;
+				continue;
+			}
+			else if(tagset_.fontsize <= 15) {
+				++tagset_.xlabelfreq;
+				continue;
+			}
+		}
+		--tagset_.fontsize;
+		tagset_.text.setCharacterSize(tagset_.fontsize);
+	}
+
+	return;
+}
+
+void ChartPrinter::calculate_axis_point_()
+{
+	if(xl_ == 0.0f || yl_ == 0.0f) {
+		axispoint_.x = padding_;
+		axispoint_.y = height_ - padding_;
+	}
+	else {
+		axispoint_.x = -xmin_ * xk_ + padding_;
+		axispoint_.y = height_ - (-ymin_ * yk_ + padding_);
+	}
+	
+	return;
+}
+
 void ChartPrinter::generate_tags_()
 {
 	// clear old tags
@@ -421,18 +575,20 @@ void ChartPrinter::generate_tags_()
 
 	
 	// preparation
-	if(xl_ == 0 || yl_ == 0 || tagset_.xinter == 0 || tagset_.yinter == 0) {
+	if(
+		xl_ == 0 || yl_ == 0 ||
+		tagset_.xinter == 0 || tagset_.yinter == 0
+	) {
 		return;
 	}
-
-	float start;
+	double start;
 
 
 	// generate abscissa tags
-	start = 0.0f;
-	while(start > pixelsToDescartes({0.0f, 0.0f}).x) {
-		start -= tagset_.xinter;
-	}
+	start = int(
+		pixelsToDescartes({0.0f, 0.0f}).x /
+		tagset_.xinter
+	) * double(tagset_.xinter);
 	while(start < pixelsToDescartes({width_, 0.0f}).x) {
 		tags_.abscissa.push_back(start);
 		start += tagset_.xinter;
@@ -440,17 +596,17 @@ void ChartPrinter::generate_tags_()
 
 
 	// generate ordinate tags
-	start = 0.0f;
-	while(start > pixelsToDescartes({0.0f, height_}).y) {
-		start -= tagset_.yinter;
-	}
+	start = int(
+		pixelsToDescartes({0.0f, height_}).y /
+		tagset_.yinter
+	) * double(tagset_.yinter);
 	while(start < pixelsToDescartes({0.0f, 0.0f}).y) {
 		tags_.ordinate.push_back(start);
 		start += tagset_.yinter;
 	}
 
-	// it's all
 
+	// it's all
 	return;
 }
 
@@ -697,5 +853,9 @@ ChartPrinter &ChartPrinter::correctSize(float xy)
 {
 	return *this;
 }
+
+
+
+
 
 // end

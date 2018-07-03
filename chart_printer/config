@@ -1,5 +1,6 @@
-padding = 100.0;
+padding = 200.0;
 backgroundcolor = "fae7b5";
+fontfilename = "opel.ttf";
 
 axis:
 {
@@ -11,20 +12,19 @@ tags:
 {
 	length = 30.0;
 	thickness = 5.0;
-	xinter = 1.57;
-	yinter = 0.5;
-	xyratio = 0.318471;
+	xinter = -0.5;
+	yinter = -1.0;
+	xyratio = 2.0;
 	tcolor = "black";
 
 	pxinter = 100.0;
 	pyinter = 100.0;
 
 
-	fontsize = 25;
-	xlabelfreq = 2;
-	ylabelfreq = 1;
+	fontsize = -1;
+	xlabelfreq = 0;
+	ylabelfreq = 0;
 	lcolor = "red";
-	fontfilename = "opel.ttf";
 };
 
 grid:
@@ -32,6 +32,20 @@ grid:
 	enable = true;
 	thickness = 1.0;
 	color = "555555";
+};
+
+aim:
+{
+	thickness = 1.0;
+	color = "red";
+};
+
+table:
+{
+	xpadding = 30.0;
+	ypadding = 30.0;
+	fontsize = 25.0;
+	color = "red";
 };
 
 charts = 
