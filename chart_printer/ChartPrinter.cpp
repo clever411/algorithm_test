@@ -38,7 +38,8 @@ TagSettings const &TagSettings::getDefault()
 {
 	static TagSettings const singelton {
 		20.0f, 3.0f, 10.0f, 10.0f, 1.0f,
-		sf::Color::Black
+		sf::Color::Black,
+		1, 1
 	};
 	return singelton;
 }
@@ -423,10 +424,7 @@ void ChartPrinter::draw_()
 	rtexture_.display();
 
 	// adjust sprite
-	sprite_.setTexture(rtexture_.getTexture());
-	sprite_.setTextureRect(
-		sf::IntRect(0, 0, int(width_), int(height_))
-	);
+	sprite_.setTexture(rtexture_.getTexture(), true);
 
 	return;
 }
@@ -499,6 +497,23 @@ void ChartPrinter::draw_tags_()
 	rect.setSize({tagset_.thickness, tagset_.length});
 	rect.setOrigin(rect.getSize()/2.0f);
 
+	if(tagset_.xlabelfreq == 0u)
+		tagset_.xlabelfreq = 1u;
+	if(tagset_.ylabelfreq == 0u)
+		tagset_.ylabelfreq = 1u;
+	auto zero = std::find_if(
+		tags_.abscissa.cbegin(), tags_.abscissa.cend(), 
+		[](float point)->bool {
+			return point == 0.0f;
+		}
+	);
+	if(zero == tags_.abscissa.cend())
+		throw "zero not found(abscissa)";
+
+	int n;
+	int dis = zero-tags_.abscissa.cbegin();
+	n = dis % tagset_.xlabelfreq;
+
 	char buf[16];
 	for(auto b = tags_.abscissa.cbegin(), e = tags_.abscissa.cend(); b != e; ++b) {
 		// tag
@@ -508,9 +523,16 @@ void ChartPrinter::draw_tags_()
 		rtexture_.draw(rect);
 
 		// label
-		if(*b == 0)
+		if(*b == 0.0f) {
+			n = tagset_.xlabelfreq-1;
 			continue;
-		std::snprintf(buf, 16u, "%.4g", *b);
+		}
+		if(n != 0) {
+			--n;
+			continue;
+		}
+
+		std::snprintf(buf, 16u, "%.8g", *b);
 		tagset_.text.setString(buf);
 		tagset_.text.setPosition(
 			descartesToPixels({*b, 0}) +
@@ -520,12 +542,24 @@ void ChartPrinter::draw_tags_()
 			}
 		);
 		rtexture_.draw(tagset_.text);
+		n = tagset_.xlabelfreq-1;
 	}
 
 
 	// for ordinate
 	rect.setSize({tagset_.length, tagset_.thickness});
 	rect.setOrigin(rect.getSize()/2.0f);
+
+	zero = std::find_if(
+		tags_.ordinate.cbegin(), tags_.ordinate.cend(),
+		[](float point)->bool {
+			return point == 0.0f;
+		}
+	);
+	if(zero == tags_.ordinate.cend())
+		throw "zero not found(ordinate)";
+	dis = zero - tags_.ordinate.cbegin();
+	n = dis % tagset_.ylabelfreq;
 
 	for(auto b = tags_.ordinate.cbegin(), e = tags_.ordinate.cend(); b != e; ++b) {
 		// tag
@@ -535,9 +569,15 @@ void ChartPrinter::draw_tags_()
 		rtexture_.draw(rect);
 
 		// label
-		if(*b == 0.0f)
+		if(*b == 0.0f) {
+			n = tagset_.ylabelfreq-1;
 			continue;
-		std::snprintf(buf, 16u, "%.4g", *b);
+		}
+		if(n != 0) {
+			--n;
+			continue;
+		}
+		std::snprintf(buf, 16u, "%.8g", *b);
 		tagset_.text.setString(buf);
 		tagset_.text.setPosition(
 			descartesToPixels({0, *b}) +
@@ -551,6 +591,7 @@ void ChartPrinter::draw_tags_()
 			}
 		);
 		rtexture_.draw(tagset_.text);
+		n = tagset_.ylabelfreq-1;
 	}
 
 	return;

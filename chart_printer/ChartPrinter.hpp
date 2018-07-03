@@ -35,8 +35,10 @@ struct TagSettings
 	float xinter;
 	float yinter;
 	float xyratio;
-
 	sf::Color tcolor;
+
+	unsigned int xlabelfreq;
+	unsigned int ylabelfreq;
 	sf::Text text;
 
 	static TagSettings const &getDefault();

@@ -36,7 +36,7 @@ Font font;
 
 
 Config config;
-string const CONFIG_FILE_NAME = "config";
+char const *cfgfilename;
 
 
 
@@ -162,7 +162,7 @@ Color read_color( std::string str )
 
 void init_chart()
 {
-	config.readFile(CONFIG_FILE_NAME.c_str());
+	config.readFile(cfgfilename);
 	config.setAutoConvert(true);
 
 	chart.setSize(conversion<float>(window.getSize()));
@@ -214,6 +214,8 @@ void init_chart()
 			sets.text.setCharacterSize(uibuf);
 			lookup(root, "tags.lcolor", sbuf, string("black"));
 			sets.text.setFillColor(read_color(sbuf));
+			lookup(root, "tags.xlabelfreq", sets.xlabelfreq, 1u);
+			lookup(root, "tags.ylabelfreq", sets.ylabelfreq, 1u);
 		}
 
 
@@ -298,7 +300,13 @@ int main( int argc, char *argv[] )
 {
 	// init
 	init_window();
+
+	if(argc < 2) {
+		cerr << "error: empty argument list" << endl;
+		return EXIT_FAILURE;
+	}
 	try {
+		cfgfilename = argv[1];
 		init_chart();
 	}
 	catch(FileIOException const &e) {

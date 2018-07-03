@@ -6,7 +6,7 @@ LIBS = -lsfml-graphics -lsfml-system -lsfml-window -lconfig++
 all: $(EXECUTABLE)
 
 run: all
-	$(EXECUTABLE) 
+	$(EXECUTABLE) config
 
 rebuild: clean all
 
