@@ -11,6 +11,7 @@
 #include "ChartPrinter.hpp"
 
 
+
 using namespace clever;
 using namespace libconfig;
 using namespace sf;
@@ -37,7 +38,6 @@ Font font;
 
 
 Config config;
-char const *cfgfilename;
 
 
 
@@ -161,9 +161,9 @@ Color read_color( std::string str )
 }
 
 
-void init_chart()
+void init_chart(char const *filename)
 {
-	config.readFile(cfgfilename);
+	config.readFile(filename);
 	config.setAutoConvert(true);
 
 	chart.setSize(conversion<float>(window.getSize()));
@@ -209,12 +209,12 @@ void init_chart()
 		lookup(root, "tags.thickness", sets.thickness, 5.0f);
 		lookup(root, "tags.xinter", sets.xinter, -1.0f);
 		lookup(root, "tags.yinter", sets.yinter, -1.0f);
-		lookup(root, "tags.xyratio", sets.xyratio, 0.0f);
+		lookup(root, "tags.xyratio", sets.xyratio, -1.0f);
 		lookup(root, "tags.tcolor", sbuf, string("black"));
 		sets.tcolor = read_color(sbuf);
 
-		lookup(root, "tags.pxinter", sets.pxinter, 50.0f);
-		lookup(root, "tags.pyinter", sets.pyinter, 50.0f);
+		lookup(root, "tags.pxinter", sets.pxinter, 80.0f);
+		lookup(root, "tags.pyinter", sets.pyinter, 80.0f);
 
 		// text for label settings
 		sets.text.setFont(font);
@@ -223,8 +223,6 @@ void init_chart()
 		sets.text.setFillColor(read_color(sbuf));
 		lookup(root, "tags.xlabelfreq", sets.xlabelfreq, -1);
 		lookup(root, "tags.ylabelfreq", sets.ylabelfreq, -1);
-
-
 
 		chart.setTagSettings(sets);
 	}
@@ -327,6 +325,7 @@ void init_chart()
 
 
 
+
 // main
 int main( int argc, char *argv[] )
 {
@@ -334,12 +333,12 @@ int main( int argc, char *argv[] )
 	init_window();
 
 	if(argc < 2) {
-		cerr << "error: empty argument list" << endl;
+		std::cerr << "error: empty argument list" << std::endl;
 		return EXIT_FAILURE;
 	}
+
 	try {
-		cfgfilename = argv[1];
-		init_chart();
+		init_chart(argv[1]);
 	}
 	catch(FileIOException const &e) {
 		std::cerr << "error: can't read config file" << std::endl;
@@ -349,13 +348,17 @@ int main( int argc, char *argv[] )
 		std::cerr << "error: parse error at line " << e.getLine() << std::endl;
 		return EXIT_FAILURE;
 	}
+	catch(std::exception const &e) {
+		std::cerr << e.what() << std::endl;
+		return EXIT_FAILURE;
+	}
 	
 
 	// main loop
-
 	bool drawcross = false;
 	bool drawtable = false;
 	while(window.isOpen()) {
+		// handle event
 		if(window.pollEvent(event)) {
 			if(event.type == Event::KeyPressed) {
 				switch(event.key.code) {
@@ -377,6 +380,8 @@ int main( int argc, char *argv[] )
 				}
 			}
 		}
+
+
 		// update
 		chart.update();
 

@@ -13,9 +13,11 @@ char const *DEFAULT_OUTPUT_FILE_NAME = "chart.txt";
 
 
 
+
+
 float foo(float x)
 {
-	return 2*sin(x/2);
+	return sin(x);
 }
 
 
@@ -25,10 +27,12 @@ float foo(float x)
 // main
 int main( int argc, char *argv[] )
 {
+	// characteristics
 	constexpr static float const
-		BEGIN = 0.0f, END = 20.0f, STEP = 0.1f
+		BEGIN = 0.0f, END = 15.0f, STEP = 0.1f
 	;
 
+	// set output file name
 	char const *outfilename;
 	if(argc < 2) {
 		outfilename = DEFAULT_OUTPUT_FILE_NAME;
@@ -37,6 +41,7 @@ int main( int argc, char *argv[] )
 		outfilename = argv[1];
 	}
 
+	// fill config
 	Setting &root = config.getRoot();
 	Setting &data = root.add( "data", Setting::TypeArray );
 
@@ -48,7 +53,14 @@ int main( int argc, char *argv[] )
 		*el = foo(b);
 	}
 	
+	// write result to file
 	config.writeFile(outfilename);
 
 	return 0;
 }
+
+
+
+
+
+// 3nd

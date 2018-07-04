@@ -4,7 +4,9 @@ using namespace clever;
 
 
 
-// using methods
+
+
+// constructor
 Line::Line(
 	sf::Vector2f const &begin,
 	sf::Vector2f const &end,
@@ -20,6 +22,7 @@ Line::Line(
 
 
 
+// using methods
 void Line::draw(
 	sf::RenderTarget &target,
 	sf::RenderStates states

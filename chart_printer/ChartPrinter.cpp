@@ -131,7 +131,10 @@ void ChartPrinter::drawTable(
 	states.transform *= sf::Transformable::getTransform();
 	char buf[32];
 	pixpoint = pixelsToDescartes(pixpoint);
-	std::snprintf(buf, sizeof buf, "%6.2g, %6.2g", pixpoint.x, pixpoint.y);
+	std::snprintf(buf, sizeof buf, "%6g, %6g",
+		float(int(100 * pixpoint.x))/100.0f,
+		float(int(100 * pixpoint.y))/100.0f
+	);
 	tabset_.text.setString(buf);
 	tabset_.text.setPosition({
 		width_ - ( tabset_.text.getLocalBounds().width + tabset_.padding.x ),
@@ -308,6 +311,29 @@ TableSettings const &ChartPrinter::getTableSettings() const
 
 
 
+// other 
+sf::Vector2f ChartPrinter::descartesToPixels(sf::Vector2f const &point) const
+{
+	return sf::Vector2f {
+		point.x*xk_ + axispoint_.x,
+		- point.y*yk_ + axispoint_.y
+	};
+}
+
+sf::Vector2f ChartPrinter::pixelsToDescartes(sf::Vector2f const &point) const
+{
+	return sf::Vector2f {
+		(point.x - axispoint_.x)/xk_,
+		-(point.y - axispoint_.y)/yk_
+	};
+}
+
+
+
+
+
+
+
 // implement
 void ChartPrinter::adjust_()
 {
@@ -346,6 +372,7 @@ void ChartPrinter::adjust_()
 
 
 
+// calculating
 void ChartPrinter::calculate_charts_characts_()
 {
 	// null always appears
@@ -452,7 +479,14 @@ void ChartPrinter::calculate_xkyk_()
 		tagset_.yinter = yl_ * tagset_.pyinter / h;
 
 		// unrough
-		// ...
+		tagset_.xinter = make_beauty_(
+			tagset_.xinter
+		);
+		tagset_.yinter = make_beauty_(
+			tagset_.yinter
+		);
+		
+
 
 		// xk, yk calculate
 		xk_ = tagset_.pxinter / tagset_.xinter;
@@ -504,12 +538,12 @@ void ChartPrinter::calculate_font_size_and_frequency_()
 		int buflength = 0;
 		
 		std::vector<float> longnum;
-		longnum.push_back(xmin_);
-		longnum.push_back(xmin_+xl_);
-		longnum.push_back(tagset_.xinter);
+		longnum.push_back( make_beauty_(xmin_) );
+		longnum.push_back( make_beauty_(xmin_+xl_) );
+		longnum.push_back( make_beauty_(tagset_.xinter) );
 
 		for(auto b = longnum.cbegin(), e = longnum.cend(); b != e; ++b) {
-			buflength = std::snprintf(buf, (sizeof buf)-1, "%.3g", *b);
+			buflength = std::snprintf(buf, (sizeof buf)-1, "%.8g", *b);
 			if(buflength > maxlength) {
 				std::memcpy(max, buf, buflength+1);
 				maxlength = buflength;
@@ -545,6 +579,9 @@ void ChartPrinter::calculate_font_size_and_frequency_()
 				++tagset_.xlabelfreq;
 				continue;
 			}
+		}
+		else if(tagset_.fontsize <= 15) {
+			break;
 		}
 		--tagset_.fontsize;
 		tagset_.text.setCharacterSize(tagset_.fontsize);
@@ -611,6 +648,8 @@ void ChartPrinter::generate_tags_()
 }
 
 
+
+// drawing
 void ChartPrinter::draw_()
 {
 	// preparation render texture
@@ -735,7 +774,7 @@ void ChartPrinter::draw_tags_()
 			continue;
 		}
 
-		std::snprintf(buf, 24u, "%.4g", *b);
+		std::snprintf(buf, 24u, "%.8g", *b);
 		tagset_.text.setString(buf);
 		tagset_.text.setPosition(
 			descartesToPixels({*b, 0}) +
@@ -780,7 +819,7 @@ void ChartPrinter::draw_tags_()
 			--n;
 			continue;
 		}
-		std::snprintf(buf, 24u, "%.4g", *b);
+		std::snprintf(buf, 24u, "%.8g", *b);
 		tagset_.text.setString(buf);
 		tagset_.text.setPosition(
 			descartesToPixels({0, *b}) +
@@ -829,30 +868,65 @@ void ChartPrinter::draw_charts_()
 }
 
 
-
-sf::Vector2f ChartPrinter::descartesToPixels(sf::Vector2f const &point) const
+float ChartPrinter::make_beauty_(float n)
 {
-	return sf::Vector2f {
-		point.x*xk_ + axispoint_.x,
-		- point.y*yk_ + axispoint_.y
+	constexpr static float const BEAUTY_NUMS[] = {
+		0.0f, 0.05, 0.1f, 0.25f, 0.5f,
+
+		1.0f, 1.5f, 2.0f, 2.5f,
+		3.0f, 4.0f, 5.0f, 6.0f, 8.0f,
+
+		10.0f, 15.0f, 20.0f, 25.0f,
+		30.0f, 40.0f, 50.0f, 60.0f, 80.0f,
+
+		100.0f, 150.0f, 200.0f, 250.0f,
+		300.0f, 400.0f, 500.0f, 600.0f, 800.0f,
+
+		1000.0f, 1500.0f, 2000.0f, 2500.0f,
+		3000.0f, 4000.0f, 5000.0f, 6000.0f, 8000.0f,
+
+		10000.0f, 15000.0f, 20000.0f, 25000.0f,
+		30000.0f, 40000.0f, 50000.0f, 60000.0f, 80000.0f,
+
+		100000.0f, 150000.0f, 200000.0f, 250000.0f,
+		300000.0f, 400000.0f, 500000.0f, 600000.0f, 800000.0f,
+
+		1000000.0f
 	};
+	constexpr static unsigned int const BEAUTY_NUMS_SIZE = 60;
+
+	bool isnegative = n < 0.0f;
+	if(isnegative)
+		n = -n;
+
+	auto bigger = std::find_if(
+		BEAUTY_NUMS, BEAUTY_NUMS+BEAUTY_NUMS_SIZE,
+		[&n](float arg)->bool {
+			return n < arg;
+		}
+	);
+
+	if(bigger == BEAUTY_NUMS+BEAUTY_NUMS_SIZE)
+		return isnegative ?
+			-BEAUTY_NUMS[BEAUTY_NUMS_SIZE-1] :
+			BEAUTY_NUMS[BEAUTY_NUMS_SIZE-1]
+		;
+	if(*bigger - n < n - *(bigger-1)) {
+		return isnegative ? 
+			-*bigger :
+			*bigger
+		;
+	}
+	else {
+		return isnegative ?
+			-*(bigger-1) : 
+			*(bigger-1)
+		;
+	}
+
 }
 
-sf::Vector2f ChartPrinter::pixelsToDescartes(sf::Vector2f const &point) const
-{
-	return sf::Vector2f {
-		(point.x - axispoint_.x)/xk_,
-		-(point.y - axispoint_.y)/yk_
-	};
-}
 
-
-
-
-ChartPrinter &ChartPrinter::correctSize(float xy)
-{
-	return *this;
-}
 
 
 

@@ -1,22 +1,28 @@
 EXECUTABLE = main
-CFLAGS = -c -Wall -O5
-LDFLAGS = -O5
+CFLAGS = -c -Wall -O3 -DDEBUG
+LDFLAGS = 
 LIBS = -lconfig++
 
+
+
+
+
+# main
 all: $(EXECUTABLE)
 
-run: all
+run: $(EXECUTABLE)
 	$(EXECUTABLE) 
 
-rebuild: clean all
 
-rerun: clean run
+rebuild: clean $(EXECUTABLE)
+
+rerun: clean $(EXECUTABLE)
+	$(EXECUTABLE)
 
 
 
-main: main.o
-	g++ -o $(EXECUTABLE) $(LDFLAGS) main.o $(LIBS)
-
+$(EXECUTABLE): main.o
+	g++ $(LDFLAGS) -o $(EXECUTABLE) main.o $(LIBS)
 
 main.o: main.cpp
 	g++ $(CFLAGS) -o main.o main.cpp
@@ -24,6 +30,13 @@ main.o: main.cpp
 
 
 
-clean:
-	rm *.o $(EXECUTABLE)
 
+# clean
+clean:
+	-rm *.o $(EXECUTABLE)
+
+
+
+
+
+# end

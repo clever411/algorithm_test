@@ -1,8 +1,28 @@
 #include <chrono>
 #include <iostream>
 #include <libconfig.h++>
+#include <random>
 
 #include <clever/Stopwatch.hpp>
+
+
+
+#ifdef SELECTION_SORT
+	#include "selection_sort.cpp"
+	typedef random_array_type data_type;
+
+#elif INSERTION_SORT
+	#include "insertion_sort.cpp"
+	typedef random_array_type data_type;
+
+#else
+	static_assert(false);
+
+#endif
+
+
+
+
 
 using namespace libconfig;
 using namespace std;
@@ -21,8 +41,12 @@ char const *DEFAULT_OUTPUT_FILE_NAME = "chart.txt";
  *         numeric_type getN() - get N;
  *         any_type operator++() - next N;
  */
-template<typename Algorithm, typename Data>
-void alghorithm_test(Setting &root, Algorithm alg, Data data, size_t count = 100)
+template<typename Algorithm, typename DataType>
+void alghorithm_test(
+	Setting &root, Algorithm alg,
+	DataType data = DataType(),
+	size_t maxn = 1000u, size_t repeatcount = 1000u
+)
 {
 	using namespace chrono;
 
@@ -32,9 +56,9 @@ void alghorithm_test(Setting &root, Algorithm alg, Data data, size_t count = 100
 
 	// loop
 	clever::Stopwatch<chrono::high_resolution_clock> watch;
-	for(size_t i = 0; i < count; ++i) {
+	for(size_t i = 0; i < maxn; ++i) {
 		// algorithm testing
-		for(size_t i = 0; i < 1000; ++i) {
+		for(size_t i = 0; i < repeatcount; ++i) {
 			data.update();
 			watch.start();
 			alg(data);
@@ -51,55 +75,33 @@ void alghorithm_test(Setting &root, Algorithm alg, Data data, size_t count = 100
 
 		// reset and continue
 		watch.reset();
-		++data;
+		data.next();
+#ifndef SILENCE
+		if(i % 10 == 0)
+			cout << "success " << i << " loop" << endl;
+#endif
 	}
+#ifndef SILENCE
+	cout << "success all loops" << endl;
+#endif
 
-}
-
-
-
-class Data
-{
-public:
-	Data &update()
-	{
-		return *this;
-	}
-	size_t getN() const
-	{
-		return n_;
-	}
-	Data &operator++()
-	{
-		++n_;
-		return *this;
-	}
-
-private:
-	size_t n_ = 0u;
-
-};
-
-
-
-int something(Data const &data)
-{
-	int result = 0;
-	for(size_t i = 0; i < data.getN(); ++i) {
-		for(size_t j = 0; j < data.getN(); ++j) {
-			result += j;
-		}
-		result += i;
-	}
-	return result;
 }
 
 
 
 
 
+
+// main
 int main( int argc, char *argv[] )
 {
+	// give seed to random
+	srand(
+		chrono::system_clock::now().
+		time_since_epoch().count()
+	);
+	
+	// set output file name
 	char const *outfilename;
 	if(argc < 2) {
 		outfilename = DEFAULT_OUTPUT_FILE_NAME;
@@ -108,7 +110,10 @@ int main( int argc, char *argv[] )
 		outfilename = argv[1];
 	}
 
-	alghorithm_test(config.getRoot(), something, Data(), 150);
+	// test algorthim
+	alghorithm_test(config.getRoot(), algorithm, data_type(), 1000);
+	
+	// write result in file
 	config.writeFile(outfilename);
 
 	return 0;

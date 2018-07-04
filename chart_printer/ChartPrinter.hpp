@@ -170,8 +170,6 @@ public:
 	);
 	GridSettings const &getGridSettings() const;
 
-	ChartPrinter &correctSize(float xy);
-
 
 	// cross settings
 	ChartPrinter &setAimSettings(
@@ -210,6 +208,8 @@ private:
 	void draw_axis_();
 	void draw_tags_();
 	void draw_charts_();
+
+	static float make_beauty_(float n);
 
 
 	
