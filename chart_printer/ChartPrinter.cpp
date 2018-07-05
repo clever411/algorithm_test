@@ -523,6 +523,9 @@ void ChartPrinter::calculate_xkyk_()
 
 void ChartPrinter::calculate_font_size_and_frequency_()
 {
+	if(tagset_.xinter == 0.0f || tagset_.yinter == 0.0f)
+		return;
+
 	// accurate font size
 	if(tagset_.fontsize > 0) {
 		tagset_.text.setCharacterSize( tagset_.fontsize );
@@ -586,6 +589,9 @@ void ChartPrinter::calculate_font_size_and_frequency_()
 		--tagset_.fontsize;
 		tagset_.text.setCharacterSize(tagset_.fontsize);
 	}
+
+	if(tagset_.ylabelfreq <= 0)
+		tagset_.ylabelfreq = 1;
 
 	return;
 }
@@ -736,106 +742,123 @@ void ChartPrinter::draw_tags_()
 
 
 	// for abscissa
-	rect.setSize({tagset_.thickness, tagset_.length});
-	rect.setOrigin(rect.getSize()/2.0f);
+	if(!tags_.abscissa.empty() && tagset_.xlabelfreq > 0) {
 
-	if(tagset_.xlabelfreq == 0u)
-		tagset_.xlabelfreq = 1u;
-	if(tagset_.ylabelfreq == 0u)
-		tagset_.ylabelfreq = 1u;
-	auto zero = std::min_element(
-		tags_.abscissa.cbegin(), tags_.abscissa.cend(), 
-		[](float lhs, float rhs)->bool {
-			return std::fabs(lhs) < std::fabs(rhs);
-		}
-	);
-	if(zero == tags_.abscissa.cend())
-		throw "zero not found(abscissa)";
+		// preparation
+		rect.setSize({tagset_.thickness, tagset_.length});
+		rect.setOrigin(rect.getSize()/2.0f);
 
-	int n;
-	int dis = zero-tags_.abscissa.cbegin();
-	n = dis % tagset_.xlabelfreq;
-
-	char buf[24];
-	for(auto b = tags_.abscissa.cbegin(), e = tags_.abscissa.cend(); b != e; ++b) {
-		// tag
-		rect.setPosition(
-			descartesToPixels({*b, 0})
-		);
-		rtexture_.draw(rect);
-
-		// label
-		if(b == zero) {
-			n = tagset_.xlabelfreq-1;
-			continue;
-		}
-		if(n != 0) {
-			--n;
-			continue;
-		}
-
-		std::snprintf(buf, 24u, "%.8g", *b);
-		tagset_.text.setString(buf);
-		tagset_.text.setPosition(
-			descartesToPixels({*b, 0}) +
-			sf::Vector2f{
-				-0.5f*tagset_.text.getGlobalBounds().width,
-				axis_.thickness + tagset_.length*0.5f
+		auto zero = std::min_element(
+			tags_.abscissa.cbegin(), tags_.abscissa.cend(), 
+			[](float lhs, float rhs)->bool {
+				return std::fabs(lhs) < std::fabs(rhs);
 			}
 		);
-		rtexture_.draw(tagset_.text);
-		n = tagset_.xlabelfreq-1;
+		if(zero == tags_.abscissa.cend())
+			throw "zero not found(abscissa)";
+
+
+
+		// draw loop abscissa
+		int n =
+			(zero - tags_.abscissa.cbegin()) %
+			tagset_.xlabelfreq;
+		char buf[24u];
+
+		for(auto b = tags_.abscissa.cbegin(), e = tags_.abscissa.cend(); b != e; ++b) {
+			// draw tag
+			rect.setPosition(
+				descartesToPixels({*b, 0})
+			);
+			rtexture_.draw(rect);
+
+			// draw label ?
+			if(b == zero) {
+				n = tagset_.xlabelfreq-1;
+				continue;
+			}
+			if(n != 0) {
+				--n;
+				continue;
+			}
+
+			// draw label
+			std::snprintf(buf, sizeof buf, "%.8g", *b);
+			tagset_.text.setString(buf);
+			tagset_.text.setPosition(
+				descartesToPixels({*b, 0}) +
+				sf::Vector2f{
+					-0.5f*tagset_.text.getGlobalBounds().width,
+					axis_.thickness + tagset_.length*0.5f
+				}
+			);
+			rtexture_.draw(tagset_.text);
+			n = tagset_.xlabelfreq-1;
+		}
+
 	}
+
 
 
 	// for ordinate
-	rect.setSize({tagset_.length, tagset_.thickness});
-	rect.setOrigin(rect.getSize()/2.0f);
+	if(!tags_.ordinate.empty()) {
 
-	zero = std::min_element(
-		tags_.ordinate.cbegin(), tags_.ordinate.cend(),
-		[](float lhs, float rhs)->bool {
-			return std::fabs(lhs) < std::fabs(rhs);
-		}
-	);
-	if(zero == tags_.ordinate.cend())
-		throw "zero not found(ordinate)";
-	dis = zero - tags_.ordinate.cbegin();
-	n = dis % tagset_.ylabelfreq;
+		// preparation
+		rect.setSize({tagset_.length, tagset_.thickness});
+		rect.setOrigin(rect.getSize()/2.0f);
 
-	for(auto b = tags_.ordinate.cbegin(), e = tags_.ordinate.cend(); b != e; ++b) {
-		// tag
-		rect.setPosition(
-			descartesToPixels({0, *b})
-		);
-		rtexture_.draw(rect);
-
-		// label
-		if(b == zero) {
-			n = tagset_.ylabelfreq-1;
-			continue;
-		}
-		if(n != 0) {
-			--n;
-			continue;
-		}
-		std::snprintf(buf, 24u, "%.8g", *b);
-		tagset_.text.setString(buf);
-		tagset_.text.setPosition(
-			descartesToPixels({0, *b}) +
-			sf::Vector2f{
-				-(
-					1.0f*tagset_.text.getLocalBounds().width +
-					tagset_.length*0.5f +
-					axis_.thickness
-				),
-				-0.5f*tagset_.text.getLocalBounds().height
+		// find zero
+		auto zero = std::min_element(
+			tags_.ordinate.cbegin(), tags_.ordinate.cend(),
+			[](float lhs, float rhs)->bool {
+				return std::fabs(lhs) < std::fabs(rhs);
 			}
 		);
-		rtexture_.draw(tagset_.text);
-		n = tagset_.ylabelfreq-1;
+		if(zero == tags_.ordinate.cend())
+			throw "zero not found(ordinate)";
+		int n =
+			(zero - tags_.ordinate.cbegin()) %
+			tagset_.ylabelfreq;
+		char buf[24u];
+
+		for(auto b = tags_.ordinate.cbegin(), e = tags_.ordinate.cend(); b != e; ++b) {
+			// draw tag
+			rect.setPosition(
+				descartesToPixels({0, *b})
+			);
+			rtexture_.draw(rect);
+
+
+			// draw label ?
+			if(b == zero) {
+				n = tagset_.ylabelfreq-1;
+				continue;
+			}
+			if(n != 0) {
+				--n;
+				continue;
+			}
+
+			// draw label
+			std::snprintf(buf, sizeof buf, "%.8g", *b);
+			tagset_.text.setString(buf);
+			tagset_.text.setPosition(
+				descartesToPixels({0, *b}) +
+				sf::Vector2f{
+					-(
+						1.0f*tagset_.text.getLocalBounds().width +
+						tagset_.length*0.5f +
+						axis_.thickness
+					),
+					-0.5f*tagset_.text.getLocalBounds().height
+				}
+			);
+			rtexture_.draw(tagset_.text);
+			n = tagset_.ylabelfreq-1;
+		}
 	}
 
+	// it's all
 	return;
 }
 
@@ -871,29 +894,29 @@ void ChartPrinter::draw_charts_()
 float ChartPrinter::make_beauty_(float n)
 {
 	constexpr static float const BEAUTY_NUMS[] = {
-		0.0f, 0.05, 0.1f, 0.25f, 0.5f,
+		0.0f, 0.05, 0.1f, 0.125, 0.25f, 0.5f,
 
-		1.0f, 1.5f, 2.0f, 2.5f,
-		3.0f, 4.0f, 5.0f, 6.0f, 8.0f,
+		1.0f, 1.25, 1.5f, 2.0f, 2.5f,
+		3.0f, 4.0f, 5.0f, 6.0f, 7.5f,
 
-		10.0f, 15.0f, 20.0f, 25.0f,
-		30.0f, 40.0f, 50.0f, 60.0f, 80.0f,
+		10.0f, 12.5f, 15.0f, 20.0f, 25.0f,
+		30.0f, 40.0f, 50.0f, 60.0f, 75.0f,
 
-		100.0f, 150.0f, 200.0f, 250.0f,
-		300.0f, 400.0f, 500.0f, 600.0f, 800.0f,
+		100.0f, 125.0f, 150.0f, 200.0f, 250.0f,
+		300.0f, 400.0f, 500.0f, 600.0f, 750.0f,
 
-		1000.0f, 1500.0f, 2000.0f, 2500.0f,
-		3000.0f, 4000.0f, 5000.0f, 6000.0f, 8000.0f,
+		1000.0f, 1250.0f, 1500.0f, 2000.0f, 2500.0f,
+		3000.0f, 4000.0f, 5000.0f, 6000.0f, 7500.0f,
 
-		10000.0f, 15000.0f, 20000.0f, 25000.0f,
-		30000.0f, 40000.0f, 50000.0f, 60000.0f, 80000.0f,
+		10000.0f, 12500.0f, 15000.0f, 20000.0f, 25000.0f,
+		30000.0f, 40000.0f, 50000.0f, 60000.0f, 75000.0f,
 
-		100000.0f, 150000.0f, 200000.0f, 250000.0f,
-		300000.0f, 400000.0f, 500000.0f, 600000.0f, 800000.0f,
+		100000.0f, 125000.0f, 150000.0f, 200000.0f, 250000.0f,
+		300000.0f, 400000.0f, 500000.0f, 600000.0f, 750000.0f,
 
 		1000000.0f
 	};
-	constexpr static unsigned int const BEAUTY_NUMS_SIZE = 60;
+	constexpr static unsigned int const BEAUTY_NUMS_SIZE = sizeof(BEAUTY_NUMS)/sizeof(float);
 
 	bool isnegative = n < 0.0f;
 	if(isnegative)

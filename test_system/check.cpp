@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <chrono>
 #include <iostream>
 #include <random>
@@ -29,22 +30,35 @@ using namespace std;
 
 int main( int argc, char *argv[] )
 {
-	srand(chrono::system_clock::now().time_since_epoch().count());
+	constexpr unsigned int const VECTOR_SIZE = 20u;
+
+
+	// fill
+	default_random_engine dre(
+		chrono::system_clock::now().
+		time_since_epoch().count()
+	);
 	std::vector<int> vec;
 
-	vec.reserve(30);
-	for(size_t i = 0; i < 30; ++i) {
-		vec.push_back( rand()%1000 - 500 );
+	vec.reserve(VECTOR_SIZE);
+	for(size_t i = 0; i < VECTOR_SIZE; ++i) {
+		vec.push_back(i);
 	}
+	shuffle( vec.begin(), vec.end(), dre );
 
+
+	// print&test
 	std::cout << "before: " << vec << std::endl;
 
-	data_type data;
-	data.d = vec.data();
-	data.n = vec.size();
-	algorithm(data);
-	data.d = nullptr;
+		// testing
+		data_type data;
+		data.d = vec.data();
+		data.n = vec.size();
+		algorithm(data);
+		data.d = nullptr;
+
 	std::cout << "after: " << vec << std::endl;
+
 
 	return 0;
 }

@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <chrono>
 #include <random>
 
 #include "Data.hpp"
@@ -12,15 +14,7 @@ struct RandomArrayStruct
 	int *d;
 	unsigned int n;
 
-protected:
-	void fill_()
-	{
-		for(auto *b = d, *e = d+n; b != e; ++b) {
-			*b = std::rand()%1000 - 500;
-		}
-		return;
-	}
-
+	std::default_random_engine dre;
 };
 
 
@@ -29,7 +23,18 @@ protected:
 
 // Data constructor, destructor
 template<>
-Data<RandomArrayStruct>::Data(): RandomArrayStruct{new int[1u], 1u} {}
+Data<RandomArrayStruct>::Data():
+	RandomArrayStruct{
+		new int[1], 1,
+		std::default_random_engine(
+			std::chrono::system_clock::now().
+			time_since_epoch().count()
+		)
+	}
+{
+	*d = 0;
+	return;
+}
 
 template<>
 Data<RandomArrayStruct>::~Data()
@@ -40,11 +45,12 @@ Data<RandomArrayStruct>::~Data()
 }
 
 
+
 // Data interface method
 template<>
 Data<RandomArrayStruct> &Data<RandomArrayStruct>::update()
 {
-	fill_();
+	std::shuffle(d, d+n, dre);
 	return *this;
 }
 
@@ -57,13 +63,31 @@ unsigned int Data<RandomArrayStruct>::getN() const
 template<>
 Data<RandomArrayStruct> &Data<RandomArrayStruct>::next()
 {
-	delete[] d;
+	// resize
+	if(d)
+		delete[] d;
 	++n;
 	d = new int[n];
-	fill_();
+
+	// fill
+	for(size_t i = 0; i < n; ++i) {
+		d[i] = i;
+	}
+
+	// randomize
+	update();
 
 	return *this;
 }
 
 
+
+
+
 typedef Data<RandomArrayStruct> random_array_type;
+
+
+
+
+
+// end

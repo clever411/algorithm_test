@@ -1,7 +1,7 @@
 #include <chrono>
 #include <iostream>
+#include <fstream>
 #include <libconfig.h++>
-#include <random>
 
 #include <clever/Stopwatch.hpp>
 
@@ -28,6 +28,7 @@ using namespace libconfig;
 using namespace std;
 
 
+
 Config config;
 char const *DEFAULT_OUTPUT_FILE_NAME = "chart.txt";
 
@@ -41,21 +42,18 @@ char const *DEFAULT_OUTPUT_FILE_NAME = "chart.txt";
  *         numeric_type getN() - get N;
  *         any_type operator++() - next N;
  */
-template<typename Algorithm, typename DataType>
+template<typename Ostream, typename Algorithm, typename DataType>
 void alghorithm_test(
-	Setting &root, Algorithm alg,
+	Ostream &os, Algorithm alg,
 	DataType data = DataType(),
 	size_t maxn = 1000u, size_t repeatcount = 1000u
 )
 {
 	using namespace chrono;
 
-	// preparation
-	Setting &cfgdata = root.add( "data", Setting::TypeArray );
-	Setting *el;
-
 	// loop
 	clever::Stopwatch<chrono::high_resolution_clock> watch;
+	float fbuf;
 	for(size_t i = 0; i < maxn; ++i) {
 		// algorithm testing
 		for(size_t i = 0; i < repeatcount; ++i) {
@@ -66,25 +64,30 @@ void alghorithm_test(
 		}
 
 		// add to config
-		el = &cfgdata.add(Setting::TypeFloat);
-		*el = (float)data.getN();
-		el = &cfgdata.add(Setting::TypeFloat);
-		*el = (float)chrono::duration_cast<
+		fbuf = (float)data.getN();
+		os.write( (char const *)&fbuf, sizeof fbuf );
+
+		fbuf = (float)chrono::duration_cast<
 			chrono::duration<double, ratio<1, 1000000>>
 		>(watch.duration()).count();
+		os.write( (char const *)&fbuf, sizeof fbuf );
+		
 
 		// reset and continue
 		watch.reset();
 		data.next();
+
 #ifndef SILENCE
 		if(i % 10 == 0)
 			cout << "success " << i << " loop" << endl;
 #endif
 	}
+
 #ifndef SILENCE
 	cout << "success all loops" << endl;
 #endif
 
+	return;
 }
 
 
@@ -95,27 +98,32 @@ void alghorithm_test(
 // main
 int main( int argc, char *argv[] )
 {
-	// give seed to random
-	srand(
-		chrono::system_clock::now().
-		time_since_epoch().count()
-	);
-	
-	// set output file name
 	char const *outfilename;
-	if(argc < 2) {
+
+
+	// set output file name
+	if(argc < 2)
 		outfilename = DEFAULT_OUTPUT_FILE_NAME;
-	}
-	else {
+	else
 		outfilename = argv[1];
-	}
+
 
 	// test algorthim
-	alghorithm_test(config.getRoot(), algorithm, data_type(), 1000);
-	
-	// write result in file
-	config.writeFile(outfilename);
+	{
+		ofstream fout(outfilename, ofstream::binary);
+		if(!fout) {
+			cerr << "can't open file '" << outfilename << "'" << endl;
+			return EXIT_FAILURE;
+		}
 
+		alghorithm_test(
+			fout, algorithm, data_type(),
+			1000u, 100u
+		);
+	}
+
+
+	// it's all
 	return 0;
 }
 

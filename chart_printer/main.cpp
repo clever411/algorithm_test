@@ -181,7 +181,7 @@ void init_chart(char const *filename)
 
 	// padding and color
 	{
-		lookup(root, "padding", fbuf, 100.0f);
+		lookup(root, "padding", fbuf, 200.0f);
 		chart.setPadding(fbuf);
 
 		lookup(root, "backgroundcolor", sbuf, string("white"));
@@ -241,6 +241,7 @@ void init_chart(char const *filename)
 
 	// charts
 	{
+		// get charts node
 		Setting const *chset;
 		try {
 			chset = &root.lookup("charts");
@@ -252,43 +253,45 @@ void init_chart(char const *filename)
 		}
 
 
+
+		// read charts
 		ChartSettings sets;
 		chartptr_type achart(new chart_type());
 		std::pair<float, float> point;
-		Setting const *data;
+		float overlayprior;
 
 		for(auto b = chset->begin(), e = chset->end(); b != e; ++b) {
-			lookup(*b, "thickness", sets.thickness, 2.0f);
-			lookup(*b, "overlayprior", sets.overlayprior, 0.0f);
+			// read base characts
+			lookup(*b, "thickness", sets.thickness, 3.0f);
+			lookup(*b, "overlayprior", sets.overlayprior, overlayprior);
 			lookup(*b, "color", sbuf, string("black"));
 			sets.color = read_color(sbuf);
 
-			try {
-				data = &b->lookup("data");
-			}
-			catch(SettingNotFoundException const &e) {
-				continue;
-			}
-			if(!data->isArray())
+
+			// read chart's data
+			lookup(*b, "datafilename", sbuf, string(""));
+			if(sbuf.empty())
 				continue;
 
-			try {
-				achart->reserve( data->getLength()/2 );
-				for(auto b = data->begin(), e = data->end(); b != e; ++b) {
-					point.first = *b;
-					if(++b == e)
-						break;
-					point.second = *b;
+			{
+				ifstream fin(sbuf, ifstream::binary);
+				if(!fin) {
+					cerr << "error: file not found '" << sbuf << "'" << endl;
+					continue;
+				}
+				while(
+					fin.read( (char *)&point.first, sizeof point.first ) &&
+					fin.read( (char *)&point.second, sizeof point.second )
+				) {
 					achart->push_back(point);
 				}
 			}
-			catch(SettingTypeException const &e) {
-				continue;
-			}
 
+
+			// add chart
 			chart.addChart( achart, sets );
 			achart.reset(new chart_type());
-
+			overlayprior += 1.0f;
 		}
 
 	}

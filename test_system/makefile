@@ -1,5 +1,4 @@
-EXECUTABLE = algtest
-CHECK_EXECUTABLE = check
+EXECUTABLE = main
 CFLAGS = -c -Wall -O5 -I../
 LDFLAGS = 
 LIBS = -lconfig++
@@ -32,11 +31,11 @@ main.o: main.cpp
 
 
 # algorithm test without writing config file
-$(CHECK_EXECUTABLE): check.cpp
-	g++ $(CFLAGS) $(ALGORITHM) -o $(CHECK_EXECUTABLE) check.cpp
+check: check.cpp
+	g++ $(ALGORITHM) -o check check.cpp
 
-checkrun: $(CHECK_EXECUTABLE)
-	$(CHECK_EXECUTABLE)
+checkrun: check
+	check
 
 
 

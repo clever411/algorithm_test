@@ -1,15 +1,13 @@
 #include <cmath>
 #include <iostream>
+#include <fstream>
 
-#include <libconfig.h++>
 
-using namespace libconfig;
 using namespace std;
 
 
 
-Config config;
-char const *DEFAULT_OUTPUT_FILE_NAME = "chart.txt";
+char const *DEFAULT_OUTPUT_FILE_NAME = "chart.chart";
 
 
 
@@ -17,7 +15,7 @@ char const *DEFAULT_OUTPUT_FILE_NAME = "chart.txt";
 
 float foo(float x)
 {
-	return sin(x);
+	return cos(x);
 }
 
 
@@ -27,34 +25,36 @@ float foo(float x)
 // main
 int main( int argc, char *argv[] )
 {
+	char const *outfilename;
+
 	// characteristics
 	constexpr static float const
 		BEGIN = 0.0f, END = 15.0f, STEP = 0.1f
 	;
 
 	// set output file name
-	char const *outfilename;
-	if(argc < 2) {
+	if(argc < 2)
 		outfilename = DEFAULT_OUTPUT_FILE_NAME;
-	}
-	else {
+	else
 		outfilename = argv[1];
-	}
 
-	// fill config
-	Setting &root = config.getRoot();
-	Setting &data = root.add( "data", Setting::TypeArray );
+	// write chart to file
+	{
+		ofstream fout(outfilename);
+		if(!fout) {
+			cerr << "can't open file" << endl;
+			return EXIT_FAILURE;
+		}
 
-	Setting *el = nullptr;
-	for(float b = BEGIN, e = END; b <= e; b += STEP) {
-		el = &data.add(Setting::TypeFloat);
-		*el = b;
-		el = &data.add(Setting::TypeFloat);
-		*el = foo(b);
+		float fbuf;
+
+		for(float b = BEGIN, e = END; b <= e; b += STEP) {
+			fout.write( (char const *)&b, sizeof b );
+			fbuf = foo(b);
+			fout.write( (char const *)&fbuf, sizeof fbuf );
+		}
 	}
 	
-	// write result to file
-	config.writeFile(outfilename);
 
 	return 0;
 }
