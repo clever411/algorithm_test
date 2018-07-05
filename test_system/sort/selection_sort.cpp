@@ -1,12 +1,11 @@
-#include <random>
-
-#include "random_array.cpp"
-
+#include <utility>
+#include "../structures/random_array.cpp"
 
 
 
 
-// find minimum element
+
+// find min element
 template<typename Iter>
 inline Iter min_element(Iter b, Iter e)
 {
@@ -21,7 +20,7 @@ inline Iter min_element(Iter b, Iter e)
 }
 
 
-void algorithm(random_array_type &ar)
+void selection_sort(random_array_type &ar)
 {
 	int *min;
 	for(auto *b = ar.d, *e = ar.d+ar.n; b < e; ++b) {

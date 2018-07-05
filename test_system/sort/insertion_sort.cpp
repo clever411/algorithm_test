@@ -1,12 +1,11 @@
-#include <random>
-
-#include "random_array.cpp"
-
+#include <utility>
+#include "../structures/random_array.cpp"
 
 
 
 
-void algorithm(random_array_type &ar)
+
+void selection_sort(random_array_type &ar)
 {
 	int buf;
 	int *j;

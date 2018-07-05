@@ -1,5 +1,5 @@
 EXECUTABLE = main
-CFLAGS = -c -Wall -g3 -DDEBUG -I../
+CFLAGS = -c -Wall -g3 -DDEBUG -I../lib
 LDFLAGS =
 LIBS = -lsfml-graphics -lsfml-system -lsfml-window -lconfig++
 

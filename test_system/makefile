@@ -1,8 +1,8 @@
 EXECUTABLE = main
-CFLAGS = -c -Wall -O5 -I../
+CFLAGS = -c -Wall -O5 -I../lib
 LDFLAGS = 
 LIBS = -lconfig++
-ALGORITHM = -DINSERTION_SORT
+ALGORITHM = -DBUBBLE_SORT
 
 
 

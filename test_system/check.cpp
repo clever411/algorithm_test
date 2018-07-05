@@ -8,12 +8,19 @@
 
 
 #ifdef SELECTION_SORT
-	#include "selection_sort.cpp"
+	#include "sort/selection_sort.cpp"
 	typedef random_array_type data_type;
+	constexpr void(*algorithm)(data_type &) = &selection_sort;
 
 #elif INSERTION_SORT
-	#include "insertion_sort.cpp"
+	#include "sort/insertion_sort.cpp"
 	typedef random_array_type data_type;
+	constexpr void(*algorithm)(data_type &) = &insertion_sort; 
+
+#elif BUBBLE_SORT
+	#include "sort/bubble_sort.cpp"
+	typedef random_array_type data_type;
+	constexpr void(*algorithm)(data_type &) = &bubble_sort;
 
 #else
 	static_assert(false);
@@ -46,6 +53,12 @@ int main( int argc, char *argv[] )
 	}
 	shuffle( vec.begin(), vec.end(), dre );
 
+	sort(
+		vec.begin(), vec.end(),
+		[](int lhs, int rhs)->bool {
+			return lhs > rhs;
+		}
+	);
 
 	// print&test
 	std::cout << "before: " << vec << std::endl;

@@ -8,12 +8,19 @@
 
 
 #ifdef SELECTION_SORT
-	#include "selection_sort.cpp"
+	#include "sort/selection_sort.cpp"
 	typedef random_array_type data_type;
+	constexpr void(*algorithm)(data_type &) = &selection_sort;
 
 #elif INSERTION_SORT
-	#include "insertion_sort.cpp"
+	#include "sort/insertion_sort.cpp"
 	typedef random_array_type data_type;
+	constexpr void(*algorithm)(data_type &) = &insertion_sort;
+
+#elif BUBBLE_SORT
+	#include "sort/bubble_sort.cpp"
+	typedef random_array_type data_type;
+	constexpr void(*algorithm)(data_type &) = &bubble_sort;
 
 #else
 	static_assert(false);
@@ -30,7 +37,7 @@ using namespace std;
 
 
 Config config;
-char const *DEFAULT_OUTPUT_FILE_NAME = "chart.txt";
+char const *DEFAULT_OUTPUT_FILE_NAME = "chart.chart";
 
 
 /*
@@ -49,32 +56,61 @@ void alghorithm_test(
 	size_t maxn = 1000u, size_t repeatcount = 1000u
 )
 {
+	// using, types
 	using namespace chrono;
 
-	// loop
+	typedef duration<double, ratio<1, 1000000>> duration_type;
+
+
+
+	// preparation
 	clever::Stopwatch<chrono::high_resolution_clock> watch;
+	auto durs = new duration_type[repeatcount];
+	duration_type result;
 	float fbuf;
+
+
+	// loop
 	for(size_t i = 0; i < maxn; ++i) {
+
 		// algorithm testing
 		for(size_t i = 0; i < repeatcount; ++i) {
+			watch.reset();
 			data.update();
+
+			// execute algorithm
 			watch.start();
 			alg(data);
 			watch.stop();
+
+			// writing
+			durs[i] = duration_cast<
+				duration_type
+			>( watch.duration() );
 		}
 
-		// add to config
+
+		// exclude minimum and maximum case
+		auto maxdur = max_element( durs, durs+repeatcount );
+		auto mindur = min_element( durs, durs+repeatcount );
+
+		result = duration_type::zero();
+		for(auto *b = durs, *e = durs+repeatcount; b != e; ++b) {
+			if(b != maxdur && b != mindur) {
+				result += *b;
+			}
+		}
+
+		
+		// write point to file
 		fbuf = (float)data.getN();
 		os.write( (char const *)&fbuf, sizeof fbuf );
 
-		fbuf = (float)chrono::duration_cast<
-			chrono::duration<double, ratio<1, 1000000>>
-		>(watch.duration()).count();
+		fbuf = (float)result.count();
 		os.write( (char const *)&fbuf, sizeof fbuf );
 		
 
-		// reset and continue
-		watch.reset();
+		// to be continue...
 		data.next();
 
 #ifndef SILENCE
@@ -118,7 +154,7 @@ int main( int argc, char *argv[] )
 
 		alghorithm_test(
 			fout, algorithm, data_type(),
-			1000u, 100u
+			500u, 100u
 		);
 	}
 
