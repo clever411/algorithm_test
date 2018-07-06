@@ -68,34 +68,28 @@ table:
 charts = 
 (
 	{
-		thickness = 1.0;
+		thickness = 2.0;
 		overlayprior = 0.0;
 		color = "black";
-		datafilename = "1.chart";
+		datafilename = "bubble_sort.chart";
 	},
 	{
-		thickness = 1.0;
+		thickness = 2.0;
 		overlayprior = 1.0;
-		color = "blue";
-		datafilename = "2.chart";
-	},
-	{
-		thickness = 1.0;
-		overlayprior = 2.0;
-		color = "red";
-		datafilename = "3.chart";
-	},
-	{
-		thickness = 1.0;
-		overlayprior = 3.0;
-		color = "green";
-		datafilename = "4.chart";
-	},
-	{
-		thickness = 1.0;
-		overlayprior = 4.0;
 		color = "magenta";
-		datafilename = "5.chart";
+		datafilename = "selection_sort.chart";
+	},
+	{
+		thickness = 2.0;
+		overlayprior = 2.0;
+		color = "green";
+		datafilename = "insertion_sort.chart";
+	},
+	{
+		thickness = 2.0;
+		overlayprior = 3.0;
+		color = "red";
+		datafilename = "merge_sort.chart";
 	}
 );
 

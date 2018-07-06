@@ -22,6 +22,11 @@
 	typedef random_array_type data_type;
 	constexpr void(*algorithm)(data_type &) = &bubble_sort;
 
+#elif MERGE_SORT
+	#include "sort/merge_sort.cpp"
+	typedef random_array_type data_type;
+	constexpr void(*algorithm)(data_type &) = &merge_sort;
+
 #else
 	static_assert(false);
 
@@ -41,10 +46,7 @@ int main( int argc, char *argv[] )
 
 
 	// fill
-	default_random_engine dre(
-		chrono::system_clock::now().
-		time_since_epoch().count()
-	);
+	default_random_engine dre( time(0) );
 	std::vector<int> vec;
 
 	vec.reserve(VECTOR_SIZE);
@@ -53,22 +55,16 @@ int main( int argc, char *argv[] )
 	}
 	shuffle( vec.begin(), vec.end(), dre );
 
-	sort(
-		vec.begin(), vec.end(),
-		[](int lhs, int rhs)->bool {
-			return lhs > rhs;
-		}
-	);
 
 	// print&test
 	std::cout << "before: " << vec << std::endl;
 
 		// testing
-		data_type data;
-		data.d = vec.data();
-		data.n = vec.size();
-		algorithm(data);
-		data.d = nullptr;
+	data_type data;
+	data.d = vec.data();
+	data.n = vec.size();
+	algorithm(data);
+	data.d = nullptr;
 
 	std::cout << "after: " << vec << std::endl;
 

@@ -1,8 +1,8 @@
 EXECUTABLE = main
 CFLAGS = -c -Wall -O5 -I../lib
 LDFLAGS = 
-LIBS = -lconfig++
-ALGORITHM = -DBUBBLE_SORT
+LIBS =
+ALGORITHM = -DMERGE_SORT
 
 
 
@@ -31,10 +31,10 @@ main.o: main.cpp
 
 
 # algorithm test without writing config file
-check: check.cpp
-	g++ $(ALGORITHM) -o check check.cpp
+check: clean check.cpp
+	g++ -g3 $(ALGORITHM) -o check check.cpp
 
-checkrun: check
+checkrun: clean check
 	check
 
 

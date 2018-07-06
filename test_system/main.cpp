@@ -1,7 +1,6 @@
 #include <chrono>
 #include <iostream>
 #include <fstream>
-#include <libconfig.h++>
 
 #include <clever/Stopwatch.hpp>
 
@@ -22,6 +21,11 @@
 	typedef random_array_type data_type;
 	constexpr void(*algorithm)(data_type &) = &bubble_sort;
 
+#elif MERGE_SORT
+	#include "sort/merge_sort.cpp"
+	typedef random_array_type data_type;
+	constexpr void(*algorithm)(data_type &) = &merge_sort;
+
 #else
 	static_assert(false);
 
@@ -31,12 +35,10 @@
 
 
 
-using namespace libconfig;
 using namespace std;
 
 
 
-Config config;
 char const *DEFAULT_OUTPUT_FILE_NAME = "chart.chart";
 
 
@@ -113,13 +115,13 @@ void alghorithm_test(
 		// to be continue...
 		data.next();
 
-#ifndef SILENCE
-		if(i % 10 == 0)
+#ifndef QUIET
+		if(i % 50 == 0)
 			cout << "success " << i << " loop" << endl;
 #endif
 	}
 
-#ifndef SILENCE
+#ifndef QUIET
 	cout << "success all loops" << endl;
 #endif
 
@@ -154,7 +156,7 @@ int main( int argc, char *argv[] )
 
 		alghorithm_test(
 			fout, algorithm, data_type(),
-			500u, 100u
+			4096u, 50u
 		);
 	}
 
