@@ -68,7 +68,7 @@ table:
 charts = 
 (
 	{
-		thickness = 2.0;
+		thickness = 3.0;
 		overlayprior = 0.0;
 		color = "black";
 		datafilename = "bubble_sort.chart";

@@ -1,7 +1,7 @@
 EXECUTABLE = main
-CFLAGS = -c -Wall -O3 -DDEBUG
+CFLAGS = -c -Wall -O5
 LDFLAGS = 
-LIBS = -lconfig++
+LIBS =
 
 
 

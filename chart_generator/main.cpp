@@ -15,7 +15,7 @@ char const *DEFAULT_OUTPUT_FILE_NAME = "chart.chart";
 
 float foo(float x)
 {
-	return cos(x);
+	return 10.0f*sin(x) + x*x - 6*x + 10;
 }
 
 
@@ -29,7 +29,7 @@ int main( int argc, char *argv[] )
 
 	// characteristics
 	constexpr static float const
-		BEGIN = 0.0f, END = 15.0f, STEP = 0.1f
+		BEGIN = 0.0f, END = 10.0f, STEP = 0.001f
 	;
 
 	// set output file name
